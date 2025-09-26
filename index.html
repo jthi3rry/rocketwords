@@ -80,6 +80,24 @@
         #wordToTypeContainer {
             min-height: 8rem;
         }
+
+        .feedback {
+            font-size: 4rem;
+            position: absolute;
+            z-index: 1000;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            animation: feedback-zoom-out-fade 1.5s forwards;
+            white-space: nowrap;
+        }
+
+        @keyframes feedback-zoom-out-fade {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -195,9 +213,14 @@
 
         <!-- Game Screen -->
         <div id="gameScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
+            
+            <span id="feedback" class="feedback"></span>
+
             <div class="flex justify-between items-center w-full max-w-xl mb-6">
                 <h2 id="modeTitle" class="text-3xl font-bold text-gray-300"></h2>
-                <span id="scoreDisplay" class="text-2xl font-bold text-green-400">Score: 0</span>
+                <div class="relative">
+                    <span id="scoreDisplay" class="text-2xl font-bold text-green-400">Score: 0</span>
+                </div>
             </div>
             
             <!-- Listen & Tap Mode -->
@@ -246,21 +269,8 @@
         
     </div>
 
-    <!-- Feedback Modal -->
-    <div id="feedbackModal" class="modal hidden fixed inset-0 flex items-center justify-center z-50">
-        <div class="bg-gray-800 rounded-3xl p-8 text-center shadow-xl transform transition-transform scale-95 duration-300">
-            <span id="correctStar" class="star-shine text-7xl mb-4 hidden">🌟</span>
-            <p id="feedbackMessage" class="text-4xl font-extrabold mb-6 text-green-400"></p>
-            <div class="flex gap-4 justify-center">
-                <button id="nextBtn" class="btn-game px-8 py-4 rounded-full text-xl font-bold text-white bg-blue-500 hover:bg-blue-600 transition-colors">
-                    Next One!
-                </button>
-                <button id="tryAgainBtn" class="btn-game px-8 py-4 rounded-full text-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors hidden">
-                    Try Again
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- The old modal is removed. We will use inline feedback instead. -->
+    
     <!-- App Logic -->
     <script>
         const data = {
@@ -285,6 +295,7 @@
             game: document.getElementById('gameScreen')
         };
         const scoreDisplay = document.getElementById('scoreDisplay');
+        const feedback = document.getElementById('feedback');
         const wordToReadDisplay = document.getElementById('wordToRead');
         const modeTitle = document.getElementById('modeTitle');
         const wordOptionsContainer = document.getElementById('wordOptions');
@@ -617,6 +628,19 @@
             }
         };
 
+        const showInlineFeedback = (isCorrect) => {
+            const correctPhrases = ["Great!", "Awesome!", "You got it!", "Good job!", "Exactly!", "You nailed it!", "Fantastic!", "Spot on!", "You're on fire!"];
+            const incorrectPhrases = ["Oops!", "Try again!", "Not quite!", "Don't give up!"];
+            const emoji = isCorrect ? "✅" : "❌";
+            const phrases = isCorrect ? correctPhrases : incorrectPhrases;
+            const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+
+            feedback.textContent = emoji + " " + randomPhrase;
+            feedback.style.animation = 'none';
+            void feedback.offsetWidth; // Trigger reflow
+            feedback.style.animation = null;
+        };
+
         const startListenAndTap = () => {
             wordOptionsContainer.innerHTML = '';
             const wordList = data.currentWordList;
@@ -663,12 +687,13 @@
                 saveAppStatus();
                 // playCorrectSound();
                 button.classList.add('btn-correct');
+                showInlineFeedback(true);
                 document.querySelectorAll('#wordOptions button').forEach(btn => btn.disabled = true);
-                showFeedback('Correct!', isCorrect);
+                setTimeout(startListenAndTap, 1500);
             } else {
                 button.classList.add('btn-incorrect');
                 button.disabled = true;
-                showFeedback('Oops, try again!', isCorrect);
+                showInlineFeedback(false);
             }
         };
 
@@ -722,48 +747,20 @@
                     updateScoreDisplay();
                     saveAppStatus();
                     // playCorrectSound();
+                    showInlineFeedback(true);
                     document.querySelectorAll('#letterButtonsContainer button').forEach(btn => btn.disabled = true);
-                    showFeedback('You got it!', true);
+                    setTimeout(startTypeTheWord, 1500);
                 }
             } else {
                 typedWordState = '';
                 typedWordPlaceholder = Array(data.currentWord.length).fill('_');
                 typedWordDisplay.textContent = typedWordPlaceholder.join(' ');
-                showFeedback(`Oops, try again!`, false);
+                showInlineFeedback(false);
             }
         };
 
-        const showFeedback = (message, isCorrect) => {
-            const modal = document.getElementById('feedbackModal');
-            const messageElement = document.getElementById('feedbackMessage');
-            messageElement.textContent = message;
-            modal.classList.remove('hidden');
+        // We no longer need showFeedback or hideFeedback functions
 
-            const starIcon = document.getElementById('correctStar');
-            const tryAgainBtn = document.getElementById('tryAgainBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            
-            starIcon.classList.toggle('hidden', !isCorrect);
-            tryAgainBtn.classList.toggle('hidden', isCorrect);
-            nextBtn.classList.toggle('hidden', !isCorrect);
-        };
-
-        const hideFeedback = () => {
-            const modal = document.getElementById('feedbackModal');
-            modal.classList.add('hidden');
-        };
-
-        const handleNextQuestion = () => {
-            hideFeedback();
-            if (data.mode === 'listen') {
-                startListenAndTap();
-            } else if (data.mode === 'read') {
-                startReadTheWord();
-            } else if (data.mode === 'write') {
-                startTypeTheWord();
-            }
-        };
-        
         const init = () => {
             loadAppData();
 
@@ -800,14 +797,12 @@
                 data.score += 10;
                 updateScoreDisplay();
                 saveAppStatus();
-                showFeedback('Awesome!', true);
+                showInlineFeedback(true);
+                setTimeout(startReadTheWord, 1500);
             });
             document.getElementById('nextQuestionBtn').addEventListener('click', () => {
-                hideFeedback();
                 startReadTheWord();
             });
-            document.getElementById('nextBtn').addEventListener('click', handleNextQuestion);
-            document.getElementById('tryAgainBtn').addEventListener('click', hideFeedback);
             
             // Parent Mode UI listeners
             document.getElementById('addLevelBtn').addEventListener('click', handleAddLevel);
