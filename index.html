@@ -80,41 +80,188 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    <!-- Main App Container -->
+    <div id="mainContent" class="container-bg rounded-[3rem] p-8 md:p-12 w-full max-w-4xl min-h-[70vh] flex flex-col items-center text-center relative shadow-xl">
 
-        const PARENT_PASSWORD = "word2024";
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
+             <div id="welcomeScreenContent" class="flex flex-col items-center justify-center h-full w-full">
+                <!-- Content will be added by JavaScript -->
+            </div>
+            <!-- Parent Mode Cog Icon -->
+            <button id="parentCogBtn" class="absolute bottom-4 left-4 p-4 rounded-full text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors text-3xl">⚙️</button>
+        </div>
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        let db, auth;
-        let userId;
-        let unsubscribeWords;
-        let isParentLoggedIn = false;
-        let typedWordState = '';
-        let typedWordPlaceholder = [];
-        let challengeNumber = 0;
-        let numeralState = '';
+        <!-- Parent Login Screen -->
+        <div id="parentLoginScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-purple-400 mb-6">Parent Mode</h2>
+            <p class="text-lg text-gray-400 mb-4">What's this number?</p>
+            <p id="numberAsWords" class="text-xl font-bold mb-4 text-white"></p>
+            <div class="w-full max-w-xs text-center">
+                <p id="numeralPlaceholder" class="text-4xl font-extrabold text-purple-400 tracking-widest mb-4">___</p>
+                <div id="numeralPad" class="grid grid-cols-3 gap-2">
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="1">1</button>
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="2">2</button>
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="3">3</button>
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="4">4</button>
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="5">5</button>
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="6">6</button>
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="7">7</button>
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="8">8</button>
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="9">9</button>
+                    <button class="btn-game px-6 py-4 text-lg rounded-lg bg-red-500 hover:bg-red-600 col-span-1" id="clearBtn">Clear</button>
+                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="0">0</button>
+                </div>
+            </div>
+            <p id="parentLoginError" class="text-red-400 text-sm mt-4"></p>
+            <div class="flex gap-4 mt-4">
+                <button id="backFromParentLoginBtn" class="btn-game px-6 py-3 rounded-full text-lg font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors">Cancel</button>
+            </div>
+        </div>
 
-        if (Object.keys(firebaseConfig).length > 0) {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            setLogLevel('Debug');
-        }
+        <!-- Parent Mode Screen -->
+        <div id="parentModeScreen" class="hidden flex flex-col items-center justify-start p-8 h-full w-full transition-opacity duration-500 overflow-y-auto">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-blue-400 mb-6">Manage Words & Levels</h2>
+            
+            <!-- Add/Remove Level Section -->
+            <div class="w-full max-w-lg mb-6 flex flex-col md:flex-row gap-2 items-center">
+                <input type="text" id="newLevelNameInput" placeholder="New Level Name" class="flex-grow px-4 py-3 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-lg bg-gray-800 text-white w-full md:w-auto">
+                <button id="addLevelBtn" class="btn-game px-6 py-3 rounded-full text-lg font-bold text-white bg-green-500 hover:bg-green-600 transition-colors w-full md:w-auto">Add Level</button>
+            </div>
+            
+            <!-- Select/Edit Level Section -->
+            <div class="w-full max-w-lg mb-6">
+                <div class="flex gap-2 items-center mb-2">
+                    <label for="parentLevelSelect" class="block text-xl font-bold">Select Level:</label>
+                    <button id="removeLevelBtn" class="btn-game px-4 py-2 rounded-full text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-colors">Remove</button>
+                </div>
+                <select id="parentLevelSelect" class="w-full p-3 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-center text-lg bg-gray-800 text-white"></select>
+            </div>
+            
+            <!-- Edit Level Name Section -->
+            <div class="w-full max-w-lg mb-6 flex flex-col md:flex-row gap-2 items-center">
+                <input type="text" id="levelNameInput" placeholder="Edit Level Name" class="flex-grow px-4 py-3 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-lg bg-gray-800 text-white w-full md:w-auto">
+                <button id="saveLevelNameBtn" class="btn-game px-6 py-3 rounded-full text-lg font-bold text-white bg-blue-500 hover:bg-blue-600 transition-colors w-full md:w-auto">Save Name</button>
+            </div>
 
+            <!-- Manage Words Section -->
+            <div class="w-full max-w-lg mb-6">
+                <h3 class="text-xl font-bold mb-2">Current Words:</h3>
+                <div id="wordListContainer" class="bg-gray-800 p-4 rounded-xl border-2 border-dashed border-gray-600 min-h-[100px] max-h-64 overflow-y-auto">
+                    <!-- Words will be populated here -->
+                </div>
+            </div>
+            <div class="w-full max-w-lg mb-6 flex flex-col md:flex-row gap-2 items-center">
+                <input type="text" id="newWordInput" placeholder="Add new word" class="flex-grow px-4 py-3 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-lg bg-gray-800 text-white w-full md:w-auto">
+                <button id="addWordBtn" class="btn-game px-6 py-3 rounded-full text-lg font-bold text-white bg-green-500 hover:bg-green-600 transition-colors w-full md:w-auto">Add Word</button>
+            </div>
+            <button id="backFromParentModeBtn" class="btn-game px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors mt-4">Done</button>
+        </div>
+
+
+        <!-- Level Selection Screen -->
+        <div id="levelScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-purple-400 mb-8">Choose your adventure!</h2>
+            <div id="levelContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-xl mb-8">
+                <!-- Level buttons generated by JS -->
+            </div>
+            <button id="backFromLevelBtn" class="btn-game px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors">Go Back ↩️</button>
+        </div>
+
+        <!-- Mode Selection Screen -->
+        <div id="modeScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-purple-400 mb-8">How do you want to play?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-2xl mb-8">
+                <button id="listenModeBtn" class="btn-game btn-mode px-6 py-8 rounded-2xl text-2xl font-bold hover:scale-105">
+                    <span class="text-4xl mb-2">👂</span><br>Listen
+                </button>
+                <button id="readModeBtn" class="btn-game btn-mode px-6 py-8 rounded-2xl text-2xl font-bold hover:scale-105">
+                    <span class="text-4xl mb-2">📖</span><br>Read
+                </button>
+                <button id="typeModeBtn" class="btn-game btn-mode px-6 py-8 rounded-2xl text-2xl font-bold hover:scale-105">
+                    <span class="text-4xl mb-2">✍️</span><br>Write
+                </button>
+            </div>
+            <button id="backFromModeBtn" class="btn-game px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors">Go Back ↩️</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
+            <div class="flex justify-between items-center w-full max-w-xl mb-6">
+                <h2 id="modeTitle" class="text-3xl font-bold text-gray-300"></h2>
+                <span id="scoreDisplay" class="text-2xl font-bold text-green-400">Score: 0</span>
+            </div>
+            
+            <!-- Listen & Tap Mode -->
+            <div id="listenMode" class="hidden flex flex-col items-center justify-center w-full">
+                <button id="listenRepeatBtn" class="btn-game btn-mode p-4 rounded-full mb-8">
+                    <span class="text-6xl">🔊</span>
+                </button>
+                <div id="wordOptions" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-xl">
+                    <!-- Buttons will be generated here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Read the Word Mode -->
+            <div id="readMode" class="hidden flex flex-col items-center justify-center w-full">
+                <div class="p-8 bg-gray-800 rounded-3xl w-full max-w-2xl text-center mb-8 shadow-md cursor-pointer">
+                    <p id="wordToRead" class="text-5xl md:text-7xl font-extrabold text-blue-400 uppercase"></p>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <button id="iSaidItBtn" class="btn-game btn-answer px-8 py-4 rounded-full text-2xl font-bold text-white bg-green-500 hover:bg-green-600 transition-colors">
+                        I said it! 🎉
+                    </button>
+                    <button id="nextQuestionBtn" class="btn-game btn-mode px-8 py-4 rounded-full text-2xl font-bold text-white bg-purple-500 hover:bg-purple-600 transition-colors">
+                        Next Word ➡️
+                    </button>
+                </div>
+            </div>
+
+            <!-- Type the Word Mode -->
+            <div id="typeMode" class="hidden flex flex-col items-center justify-center w-full">
+                <div class="flex flex-col items-center w-full max-w-xl">
+                    <div class="p-8 bg-gray-800 rounded-3xl w-full text-center mb-8 shadow-md">
+                        <p id="wordToType" class="text-5xl md:text-7xl font-extrabold text-blue-400 uppercase mb-4"></p>
+                        <p id="typedWord" class="text-3xl md:text-5xl font-extrabold text-purple-400 uppercase p-2 min-h-[4rem]"></p>
+                    </div>
+                </div>
+                <div id="letterButtonsContainer" class="flex flex-wrap justify-center gap-2 mt-4"></div>
+                <div class="flex flex-col md:flex-row gap-4 mt-8">
+                     <button id="typeRepeatBtn" class="btn-game btn-mode p-4 rounded-full">
+                        <span class="text-6xl">🔊</span>
+                    </button>
+                </div>
+            </div>
+            
+            <button id="backFromGameBtn" class="btn-game absolute bottom-4 left-4 px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors">Go Back ↩️</button>
+        </div>
+        
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal hidden fixed inset-0 flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-3xl p-8 text-center shadow-xl transform transition-transform scale-95 duration-300">
+            <span id="correctStar" class="star-shine text-7xl mb-4 hidden">🌟</span>
+            <p id="feedbackMessage" class="text-4xl font-extrabold mb-6 text-green-400"></p>
+            <div class="flex gap-4 justify-center">
+                <button id="nextBtn" class="btn-game px-8 py-4 rounded-full text-xl font-bold text-white bg-blue-500 hover:bg-blue-600 transition-colors">
+                    Next One!
+                </button>
+                <button id="tryAgainBtn" class="btn-game px-8 py-4 rounded-full text-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors hidden">
+                    Try Again
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- App Logic -->
+    <script>
         const data = {
             levels: {
                 level1: { name: 'Level 1', words: ['the', 'am', 'we', 'look', 'i', 'is', 'to', 'here', 'mum', 'in'] },
                 level2: { name: 'Level 2', words: ['dad', 'can', 'on', 'see', 'went', 'me', 'up', 'at', 'and', 'go'] }
             },
-            currentLevel: null,
             currentWord: null,
-            lastWord: null, // New variable to store the last word
+            lastWord: null,
             score: 0,
             mode: null,
             currentWordList: [],
@@ -130,7 +277,6 @@
             game: document.getElementById('gameScreen')
         };
         const scoreDisplay = document.getElementById('scoreDisplay');
-        const userIdDisplay = document.getElementById('userIdDisplay');
         const wordToReadDisplay = document.getElementById('wordToRead');
         const modeTitle = document.getElementById('modeTitle');
         const wordOptionsContainer = document.getElementById('wordOptions');
@@ -140,7 +286,6 @@
         const removeLevelBtn = document.getElementById('removeLevelBtn');
         const wordListContainer = document.getElementById('wordListContainer');
         const newWordInput = document.getElementById('newWordInput');
-        const numeralInput = document.getElementById('numeralInput');
         const numeralPlaceholder = document.getElementById('numeralPlaceholder');
         const numberAsWordsDisplay = document.getElementById('numberAsWords');
         const parentLoginError = document.getElementById('parentLoginError');
@@ -150,6 +295,11 @@
         const typedWordDisplay = document.getElementById('typedWord');
         const letterButtonsContainer = document.getElementById('letterButtonsContainer');
 
+        let isParentLoggedIn = false;
+        let typedWordState = '';
+        let typedWordPlaceholder = [];
+        let challengeNumber = 0;
+        let numeralState = '';
 
         let audioContext;
         let synthesizer = window.speechSynthesis;
@@ -164,62 +314,17 @@
             scoreDisplay.textContent = `Score: ${data.score}`;
         };
 
-        const saveProgress = async () => {
-            if (!userId || !db) return;
-            try {
-                const progressRef = doc(db, 'artifacts', appId, 'users', userId, 'progress', 'app_data');
-                await setDoc(progressRef, { score: data.score }, { merge: true });
-                console.log("Score saved successfully.");
-            } catch (e) {
-                console.error("Error saving score:", e);
-            }
+        const saveAppStatus = () => {
+            localStorage.setItem('rocketWordsData', JSON.stringify(data));
         };
 
-        const saveWordLists = async (lists) => {
-            if (!db) return;
-            try {
-                const wordListRef = doc(db, 'artifacts', appId, 'public', 'data', 'word_lists', 'all_levels');
-                await setDoc(wordListRef, { levels: lists });
-                console.log("Word lists saved successfully.");
-            } catch (e) {
-                console.error("Error saving word lists:", e);
+        const loadAppData = () => {
+            const savedData = JSON.parse(localStorage.getItem('rocketWordsData'));
+            if (savedData) {
+                Object.assign(data, savedData);
             }
-        };
-
-        const loadAppData = async () => {
-            if (!db) {
-                showScreen('welcome');
-                return;
-            }
-            
-            // Listen for changes to the word lists in Firestore
-            unsubscribeWords = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'word_lists', 'all_levels'), async (docSnap) => {
-                const previouslySelectedLevel = levelSelect.value;
-                if (docSnap.exists()) {
-                    data.levels = docSnap.data().levels;
-                } else {
-                    await saveWordLists(data.levels);
-                    console.log("Default word lists saved.");
-                }
-                updateLevelButtons();
-                if (isParentLoggedIn) {
-                    // Pass the previously selected level to keep the UI on the same level
-                    renderParentModeUI(previouslySelectedLevel);
-                } else {
-                    showScreen('welcome');
-                }
-            }, (error) => {
-                console.error("Error loading word lists:", error);
-            });
-
-            const progressRef = doc(db, 'artifacts', appId, 'users', userId, 'progress', 'app_data');
-            const docSnap = await getDoc(progressRef);
-            if (docSnap.exists()) {
-                const savedData = docSnap.data();
-                data.score = savedData.score || 0;
-                updateScoreDisplay();
-                console.log("Progress loaded successfully.");
-            }
+            updateScoreDisplay();
+            updateLevelButtons();
         };
 
         const updateLevelButtons = () => {
@@ -357,30 +462,32 @@
             const newName = newLevelNameInput.value.trim();
             if (newName) {
                 const newKey = `level_${Date.now()}`;
-                const newLevels = { ...data.levels, [newKey]: { name: newName, words: [] } };
+                data.levels = { ...data.levels, [newKey]: { name: newName, words: [] } };
                 newLevelNameInput.value = '';
-                saveWordLists(newLevels);
+                saveAppStatus();
+                updateLevelButtons();
+                renderParentModeUI(newKey);
             }
         };
 
         const handleRemoveLevel = () => {
             const selectedLevel = levelSelect.value;
             if (Object.keys(data.levels).length > 1) {
-                const newLevels = { ...data.levels };
-                delete newLevels[selectedLevel];
-                saveWordLists(newLevels);
+                delete data.levels[selectedLevel];
+                saveAppStatus();
+                updateLevelButtons();
+                renderParentModeUI();
             }
         };
 
         const handleSaveLevelName = () => {
             const selectedLevel = levelSelect.value;
             const newName = levelNameInput.value.trim();
-            if (newName && newName !== (data.levels[selectedLevel] ? data.levels[selectedLevel].name : '')) {
-                const newLevels = { ...data.levels };
-                if (newLevels[selectedLevel]) {
-                    newLevels[selectedLevel].name = newName;
-                    saveWordLists(newLevels);
-                }
+            if (newName && data.levels[selectedLevel]) {
+                data.levels[selectedLevel].name = newName;
+                saveAppStatus();
+                updateLevelButtons();
+                renderParentModeUI(selectedLevel);
             }
         };
 
@@ -388,10 +495,10 @@
             const selectedLevel = levelSelect.value;
             const newWord = newWordInput.value.trim().toLowerCase();
             if (newWord && data.levels[selectedLevel] && !data.levels[selectedLevel].words.includes(newWord)) {
-                const newLevels = { ...data.levels };
-                newLevels[selectedLevel].words.push(newWord);
+                data.levels[selectedLevel].words.push(newWord);
                 newWordInput.value = '';
-                saveWordLists(newLevels);
+                saveAppStatus();
+                updateParentWordList();
             }
         };
 
@@ -400,9 +507,9 @@
             if (!data.levels[selectedLevel]) return;
             const index = data.levels[selectedLevel].words.indexOf(wordToRemove);
             if (index > -1) {
-                const newLevels = { ...data.levels };
-                newLevels[selectedLevel].words.splice(index, 1);
-                saveWordLists(newLevels);
+                data.levels[selectedLevel].words.splice(index, 1);
+                saveAppStatus();
+                updateParentWordList();
             }
         };
 
@@ -454,7 +561,6 @@
             
             let randomIndex;
             let newWord;
-            // Prevent the same word from appearing twice in a row
             do {
                 randomIndex = Math.floor(Math.random() * wordList.length);
                 newWord = wordList[randomIndex];
@@ -464,7 +570,7 @@
             data.lastWord = newWord;
             
             wordToReadDisplay.textContent = formatWord(data.currentWord);
-            wordToReadDisplay.onclick = () => playWord(data.currentWord); // Make the word clickable
+            wordToReadDisplay.onclick = () => playWord(data.currentWord);
         };
 
         const playCorrectSound = () => {
@@ -496,7 +602,7 @@
                 if (voice) {
                     utterance.voice = voice;
                 }
-                utterance.rate = 0.8;
+                utterance.rate = 0.6;
                 utterance.pitch = 1.2;
                 synthesizer.speak(utterance);
             }
@@ -511,7 +617,6 @@
             }
 
             let newWord;
-            // Prevent the same word from appearing twice in a row
             do {
                 newWord = wordList[Math.floor(Math.random() * wordList.length)];
             } while (newWord === data.lastWord && wordList.length > 1);
@@ -530,13 +635,12 @@
             options.forEach(word => {
                 const button = document.createElement('button');
                 button.textContent = formatWord(word);
-                button.setAttribute('data-word', word); // Store the original word
-                button.classList.add('btn-game', 'btn-answer', 'p-6', 'rounded-xl', 'text-2xl', 'font-bold', 'uppercase', 'w-full', 'max-w-xs', 'transition-all', 'duration-200', 'transform', 'hover:scale-105', 'active:scale-95');
+                button.setAttribute('data-word', word);
+                button.classList.add('btn-game', 'btn-answer', 'p-6', 'rounded-xl', 'text-2xl', 'font-bold', 'uppercase', 'transition-all', 'duration-200', 'transform', 'hover:scale-105', 'active:scale-95', 'w-full', 'md:w-auto');
                 button.addEventListener('click', () => handleTapAnswer(word, button));
                 wordOptionsContainer.appendChild(button);
             });
 
-            // Immediately play the word and set up the repeat button
             setTimeout(() => playWord(data.currentWord), 500);
             listenRepeatBtn.onclick = () => playWord(data.currentWord);
         };
@@ -547,15 +651,14 @@
             if (isCorrect) {
                 data.score += 10;
                 updateScoreDisplay();
-                saveProgress();
-                playCorrectSound();
+                saveAppStatus();
+                // playCorrectSound();
                 button.classList.add('btn-correct');
-                // Disable all buttons to prevent further attempts
                 document.querySelectorAll('#wordOptions button').forEach(btn => btn.disabled = true);
                 showFeedback('Correct!', isCorrect);
             } else {
                 button.classList.add('btn-incorrect');
-                button.disabled = true; // Disable only the incorrect button
+                button.disabled = true;
                 showFeedback('Oops, try again!', isCorrect);
             }
         };
@@ -569,7 +672,6 @@
             }
 
             let newWord;
-            // Prevent the same word from appearing twice in a row
             do {
                 newWord = wordList[Math.floor(Math.random() * wordList.length)];
             } while (newWord === data.lastWord && wordList.length > 1);
@@ -581,7 +683,6 @@
             typedWordPlaceholder = Array(data.currentWord.length).fill('_');
             typedWordDisplay.textContent = typedWordPlaceholder.join(' ');
             
-            // Create letter buttons
             letterButtonsContainer.innerHTML = '';
             const uniqueLetters = [...new Set(data.currentWord.split(''))];
             const shuffledLetters = uniqueLetters.sort(() => 0.5 - Math.random());
@@ -589,7 +690,7 @@
             shuffledLetters.forEach(letter => {
                 const button = document.createElement('button');
                 button.textContent = formatWord(letter);
-                button.setAttribute('data-letter', letter); // Store the original letter
+                button.setAttribute('data-letter', letter);
                 button.classList.add('btn-game', 'btn-answer', 'px-6', 'py-4', 'rounded-xl', 'text-3xl', 'font-bold', 'hover:scale-110');
                 button.addEventListener('click', () => handleLetterTap(letter));
                 letterButtonsContainer.appendChild(button);
@@ -610,13 +711,12 @@
                 if (data.currentWord === typedWordState) {
                     data.score += 10;
                     updateScoreDisplay();
-                    saveProgress();
+                    saveAppStatus();
                     playCorrectSound();
                     document.querySelectorAll('#letterButtonsContainer button').forEach(btn => btn.disabled = true);
                     showFeedback('You got it!', true);
                 }
             } else {
-                // Mistake made, reset the typed word
                 typedWordState = '';
                 typedWordPlaceholder = Array(data.currentWord.length).fill('_');
                 typedWordDisplay.textContent = typedWordPlaceholder.join(' ');
@@ -655,35 +755,12 @@
             }
         };
         
-        const init = async () => {
-            if (auth) {
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken).catch(console.error);
-                } else {
-                    await signInAnonymously(auth).catch(console.error);
-                }
-                
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        userIdDisplay.textContent = `User ID: ${userId}`;
-                        loadAppData();
-                    } else {
-                        userId = 'guest-' + crypto.randomUUID();
-                        userIdDisplay.textContent = `User ID: ${userId} (Guest)`;
-                        loadAppData();
-                    }
-                });
-            } else {
-                userId = 'local-' + crypto.randomUUID();
-                userIdDisplay.textContent = `User ID: ${userId} (Local)`;
-                showScreen('welcome');
-            }
-
+        const init = () => {
+            loadAppData();
+            updateWelcomeScreen();
+            
             synthesizer.onvoiceschanged = () => {
                 const voices = synthesizer.getVoices();
-                // Find a high-quality, friendly voice. Prioritize Google/Microsoft, then a standard English voice.
                 voice = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) ||
                         voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en')) ||
                         voices.find(v => v.lang.startsWith('en-US')) ||
@@ -696,13 +773,25 @@
                 showScreen('parentLogin');
                 generateChallenge();
             });
-            document.getElementById('backFromLevelBtn').addEventListener('click', () => showScreen('welcome'));
-            document.getElementById('backFromModeBtn').addEventListener('click', () => showScreen('level'));
-            document.getElementById('backFromGameBtn').addEventListener('click', () => showScreen('mode'));
+            document.getElementById('backFromLevelBtn').addEventListener('click', () => {
+                data.score = 0;
+                updateScoreDisplay();
+                showScreen('welcome');
+            });
+            document.getElementById('backFromModeBtn').addEventListener('click', () => {
+                data.score = 0;
+                updateScoreDisplay();
+                showScreen('level');
+            });
+            document.getElementById('backFromGameBtn').addEventListener('click', () => {
+                data.score = 0;
+                updateScoreDisplay();
+                showScreen('mode');
+            });
             document.getElementById('iSaidItBtn').addEventListener('click', () => {
                 data.score += 10;
                 updateScoreDisplay();
-                saveProgress();
+                saveAppStatus();
                 showFeedback('Awesome!', true);
             });
             document.getElementById('nextQuestionBtn').addEventListener('click', () => {
@@ -710,7 +799,7 @@
                 startReadTheWord();
             });
             document.getElementById('nextBtn').addEventListener('click', handleNextQuestion);
-            document.getElementById('tryAgainBtn').addEventListener('click', hideFeedback); // Change here to only hide feedback
+            document.getElementById('tryAgainBtn').addEventListener('click', hideFeedback);
             
             // Parent Mode UI listeners
             document.getElementById('addLevelBtn').addEventListener('click', handleAddLevel);
@@ -719,7 +808,6 @@
             document.getElementById('parentLevelSelect').addEventListener('change', updateParentWordList);
             document.getElementById('saveLevelNameBtn').addEventListener('click', handleSaveLevelName);
 
-            // Using event delegation for dynamically created "Remove" buttons
             document.getElementById('wordListContainer').addEventListener('click', (e) => {
                 if (e.target.dataset.word) {
                     handleRemoveWord(e.target.dataset.word);
@@ -741,194 +829,27 @@
 
             document.getElementById('backFromParentModeBtn').addEventListener('click', () => {
                 isParentLoggedIn = false;
+                data.score = 0;
+                updateScoreDisplay();
                 showScreen('welcome');
             });
             document.getElementById('backFromParentLoginBtn').addEventListener('click', () => showScreen('welcome'));
         };
 
+        const updateWelcomeScreen = () => {
+            const welcomeContent = document.getElementById('welcomeScreenContent');
+            welcomeContent.innerHTML = `
+                <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-8 leading-tight">🚀 Rocket Words! ⭐</h1>
+                <p class="text-lg md:text-xl text-gray-300 mb-10 max-w-md">Let's learn some new words! Are you ready for an adventure?</p>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <button id="startBtn" class="btn-game px-8 py-4 rounded-full text-2xl font-bold text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-300">Start 🚀</button>
+                </div>
+            `;
+            document.getElementById('startBtn').addEventListener('click', () => showScreen('level'));
+        };
+
         window.onload = init;
     </script>
-
-    <!-- Main App Container -->
-    <div id="mainContent" class="container-bg rounded-[3rem] p-8 md:p-12 w-full max-w-4xl min-h-[70vh] flex flex-col items-center text-center relative shadow-xl">
-
-        <!-- User ID Display -->
-        <p id="userIdDisplay" class="hidden absolute top-4 left-4 text-xs text-gray-400 select-all"></p>
-
-        <!-- Welcome Screen -->
-        <div id="welcomeScreen" class="flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
-            <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-8 leading-tight">Rocket Words! 🚀⭐</h1>
-            
-            <p class="text-lg md:text-xl text-gray-300 mb-10 max-w-md">Let's learn some new words! Are you ready for an adventure?</p>
-            <div class="flex flex-col md:flex-row gap-4">
-                <button id="startBtn" class="btn-game px-8 py-4 rounded-full text-2xl font-bold text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-300">Start 🚀</button>
-            </div>
-            
-            <!-- Parent Mode Cog Icon -->
-            <button id="parentCogBtn" class="absolute bottom-4 left-4 p-4 rounded-full text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors text-3xl">⚙️</button>
-        </div>
-
-        <!-- Parent Login Screen -->
-        <div id="parentLoginScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
-            <h2 class="text-3xl md:text-4xl font-extrabold text-purple-400 mb-6">Parent Mode</h2>
-            <p class="text-lg text-gray-400 mb-4">Type the words as a number.</p>
-            <p id="numberAsWords" class="text-xl font-bold mb-4 text-white"></p>
-            <div class="w-full max-w-xs text-center">
-                <p id="numeralPlaceholder" class="text-4xl font-extrabold text-purple-400 tracking-widest mb-4">___</p>
-                <div id="numeralPad" class="grid grid-cols-3 gap-2">
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="1">1</button>
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="2">2</button>
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="3">3</button>
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="4">4</button>
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="5">5</button>
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="6">6</button>
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="7">7</button>
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="8">8</button>
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="9">9</button>
-                    <button class="btn-game px-6 py-4 text-lg rounded-lg bg-red-500 hover:bg-red-600 col-span-1" id="clearBtn">Clear</button>
-                    <button class="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg" data-digit="0">0</button>
-                </div>
-            </div>
-            <p id="parentLoginError" class="text-red-400 text-sm mt-4"></p>
-            <div class="flex gap-4 mt-4">
-                <button id="backFromParentLoginBtn" class="btn-game px-6 py-3 rounded-full text-lg font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors">Cancel</button>
-            </div>
-        </div>
-
-        <!-- Parent Mode Screen -->
-        <div id="parentModeScreen" class="hidden flex flex-col items-center justify-start p-8 h-full w-full transition-opacity duration-500 overflow-y-auto">
-            <h2 class="text-3xl md:text-4xl font-extrabold text-blue-400 mb-6">Manage Words & Levels</h2>
-            
-            <!-- Add/Remove Level Section -->
-            <div class="w-full max-w-lg mb-6 flex flex-col md:flex-row gap-2 items-center">
-                <input type="text" id="newLevelNameInput" placeholder="New Level Name" class="flex-grow px-4 py-3 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-lg bg-gray-800 text-white">
-                <button id="addLevelBtn" class="btn-game px-6 py-3 rounded-full text-lg font-bold text-white bg-green-500 hover:bg-green-600 transition-colors w-full md:w-auto">Add Level</button>
-            </div>
-            
-            <!-- Select/Edit Level Section -->
-            <div class="w-full max-w-lg mb-6">
-                <div class="flex gap-2 items-center mb-2">
-                    <label for="parentLevelSelect" class="block text-xl font-bold">Select Level:</label>
-                    <button id="removeLevelBtn" class="btn-game px-4 py-2 rounded-full text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-colors">Remove</button>
-                </div>
-                <select id="parentLevelSelect" class="w-full p-3 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-center text-lg bg-gray-800 text-white"></select>
-            </div>
-            
-            <!-- Edit Level Name Section -->
-            <div class="w-full max-w-lg mb-6 flex flex-col md:flex-row gap-2 items-center">
-                <input type="text" id="levelNameInput" placeholder="Edit Level Name" class="flex-grow px-4 py-3 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-lg bg-gray-800 text-white">
-                <button id="saveLevelNameBtn" class="btn-game px-6 py-3 rounded-full text-lg font-bold text-white bg-blue-500 hover:bg-blue-600 transition-colors w-full md:w-auto">Save Name</button>
-            </div>
-
-            <!-- Manage Words Section -->
-            <div class="w-full max-w-lg mb-6">
-                <h3 class="text-xl font-bold mb-2">Current Words:</h3>
-                <div id="wordListContainer" class="bg-gray-800 p-4 rounded-xl border-2 border-dashed border-gray-600 min-h-[100px] max-h-64 overflow-y-auto">
-                    <!-- Words will be populated here -->
-                </div>
-            </div>
-            <div class="w-full max-w-lg mb-6 flex gap-2">
-                <input type="text" id="newWordInput" placeholder="Add new word" class="flex-grow px-4 py-3 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-lg bg-gray-800 text-white">
-                <button id="addWordBtn" class="btn-game px-6 py-3 rounded-full text-lg font-bold text-white bg-green-500 hover:bg-green-600 transition-colors">Add</button>
-            </div>
-            <button id="backFromParentModeBtn" class="btn-game px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors mt-4">Done</button>
-        </div>
-
-
-        <!-- Level Selection Screen -->
-        <div id="levelScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
-            <h2 class="text-3xl md:text-4xl font-extrabold text-purple-400 mb-8">Choose your adventure!</h2>
-            <div id="levelContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-xl mb-8">
-                <!-- Level buttons generated by JS -->
-            </div>
-            <button id="backFromLevelBtn" class="btn-game px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors">Go Back</button>
-        </div>
-
-        <!-- Mode Selection Screen -->
-        <div id="modeScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
-            <h2 class="text-3xl md:text-4xl font-extrabold text-purple-400 mb-8">How do you want to play?</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-2xl mb-8">
-                <button id="listenModeBtn" class="btn-game btn-mode px-6 py-8 rounded-2xl text-2xl font-bold hover:scale-105">
-                    <span class="text-4xl mb-2">👂</span><br>Listen
-                </button>
-                <button id="readModeBtn" class="btn-game btn-mode px-6 py-8 rounded-2xl text-2xl font-bold hover:scale-105">
-                    <span class="text-4xl mb-2">📖</span><br>Read
-                </button>
-                <button id="typeModeBtn" class="btn-game btn-mode px-6 py-8 rounded-2xl text-2xl font-bold hover:scale-105">
-                    <span class="text-4xl mb-2">✍️</span><br>Write
-                </button>
-            </div>
-            <button id="backFromModeBtn" class="btn-game px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors">Go Back</button>
-        </div>
-
-        <!-- Game Screen -->
-        <div id="gameScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
-            <div class="flex justify-between items-center w-full max-w-xl mb-6">
-                <h2 id="modeTitle" class="text-3xl font-bold text-gray-300"></h2>
-                <span id="scoreDisplay" class="text-2xl font-bold text-green-400">Score: 0</span>
-            </div>
-            
-            <!-- Listen & Tap Mode -->
-            <div id="listenMode" class="hidden flex flex-col items-center justify-center w-full">
-                <button id="listenRepeatBtn" class="btn-game btn-mode p-4 rounded-full mb-8">
-                    <span class="text-6xl">🔊</span>
-                </button>
-                <div id="wordOptions" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-xl">
-                    <!-- Buttons will be generated here by JavaScript -->
-                </div>
-            </div>
-
-            <!-- Read the Word Mode -->
-            <div id="readMode" class="hidden flex flex-col items-center justify-center w-full">
-                <div class="p-8 bg-gray-800 rounded-3xl w-full max-w-2xl text-center mb-8 shadow-md cursor-pointer">
-                    <p id="wordToRead" class="text-5xl md:text-7xl font-extrabold text-blue-400 uppercase"></p>
-                </div>
-                <div class="flex flex-col md:flex-row gap-4">
-                    <button id="iSaidItBtn" class="btn-game btn-answer px-8 py-4 rounded-full text-2xl font-bold text-white bg-green-500 hover:bg-green-600 transition-colors">
-                        I said it! 🎉
-                    </button>
-                    <button id="nextQuestionBtn" class="btn-game btn-mode px-8 py-4 rounded-full text-2xl font-bold text-white bg-purple-500 hover:bg-purple-600 transition-colors">
-                        Next Word ➡️
-                    </button>
-                </div>
-            </div>
-
-            <!-- Type the Word Mode -->
-            <div id="typeMode" class="hidden flex flex-col items-center justify-center w-full">
-                <div class="flex flex-col items-center w-full max-w-xl">
-                    <div class="p-8 bg-gray-800 rounded-3xl w-full text-center mb-8 shadow-md">
-                        <p id="wordToType" class="text-5xl md:text-7xl font-extrabold text-blue-400 uppercase mb-4"></p>
-                        <p id="typedWord" class="text-3xl md:text-5xl font-extrabold text-purple-400 uppercase p-2 min-h-[4rem]"></p>
-                    </div>
-                </div>
-                <div id="letterButtonsContainer" class="flex flex-wrap justify-center gap-2 mt-4"></div>
-                <div class="flex flex-col md:flex-row gap-4 mt-8">
-                     <button id="typeRepeatBtn" class="btn-game btn-mode p-4 rounded-full">
-                        <span class="text-6xl">🔊</span>
-                    </button>
-                </div>
-            </div>
-            
-            <button id="backFromGameBtn" class="btn-game absolute bottom-4 left-4 px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors">Go Back</button>
-        </div>
-        
-    </div>
-
-    <!-- Feedback Modal -->
-    <div id="feedbackModal" class="modal hidden fixed inset-0 flex items-center justify-center z-50">
-        <div class="bg-gray-800 rounded-3xl p-8 text-center shadow-xl transform transition-transform scale-95 duration-300">
-            <span id="correctStar" class="star-shine text-7xl mb-4 hidden">🌟</span>
-            <p id="feedbackMessage" class="text-4xl font-extrabold mb-6 text-green-400"></p>
-            <div class="flex gap-4 justify-center">
-                <button id="nextBtn" class="btn-game px-8 py-4 rounded-full text-xl font-bold text-white bg-blue-500 hover:bg-blue-600 transition-colors">
-                    Next One!
-                </button>
-                <button id="tryAgainBtn" class="btn-game px-8 py-4 rounded-full text-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors hidden">
-                    Try Again
-                </button>
-            </div>
-        </div>
-    </div>
 
 </body>
 </html>
