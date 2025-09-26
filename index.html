@@ -331,6 +331,7 @@
             if (savedData) {
                 Object.assign(data, savedData);
             }
+            data.score = 0;
             updateScoreDisplay();
             updateLevelButtons();
         };
@@ -720,7 +721,7 @@
                     data.score += 10;
                     updateScoreDisplay();
                     saveAppStatus();
-                    playCorrectSound();
+                    // playCorrectSound();
                     document.querySelectorAll('#letterButtonsContainer button').forEach(btn => btn.disabled = true);
                     showFeedback('You got it!', true);
                 }
@@ -765,7 +766,6 @@
         
         const init = () => {
             loadAppData();
-            data.score = 0;
 
             synthesizer.onvoiceschanged = () => {
                 const voices = synthesizer.getVoices();
