@@ -95,7 +95,7 @@
 
         @keyframes feedback-zoom-out-fade {
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
-            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(0.9); }
             100% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
         }
     </style>
@@ -210,11 +210,12 @@
             </div>
             <button id="backFromModeBtn" class="btn-game px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors">Go Back ↩️</button>
         </div>
+        
+        <!-- Feedback Pop Out -->
+        <span id="feedback" class="feedback"></span>
 
         <!-- Game Screen -->
         <div id="gameScreen" class="hidden flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
-            
-            <span id="feedback" class="feedback"></span>
 
             <div class="flex justify-between items-center w-full max-w-xl mb-6">
                 <h2 id="modeTitle" class="text-3xl font-bold text-gray-300"></h2>
@@ -630,7 +631,7 @@
 
         const showInlineFeedback = (isCorrect) => {
             const correctPhrases = ["Great!", "Awesome!", "You got it!", "Good job!", "Exactly!", "You nailed it!", "Fantastic!", "Spot on!", "You're on fire!"];
-            const incorrectPhrases = ["Oops!", "Try again!", "Not quite!", "Don't give up!"];
+            const incorrectPhrases = ["Good try!", "Not quite!", "Keep trying!", "Don't give up!", "So close!", "Almost!", "Think about this!", "Give it another shot!"];
             const emoji = isCorrect ? "✅" : "❌";
             const phrases = isCorrect ? correctPhrases : incorrectPhrases;
             const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
