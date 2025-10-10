@@ -342,12 +342,15 @@ Every pull request to the `main` branch automatically runs:
 When a pull request is merged to `main`:
 - The application is built as a static site
 - Automatically deployed to GitHub Pages
-- Available at: `https://jthi3rry.github.io/rocketwords`
+- Available at: `https://jthi3rry.github.io/rocketwords/`
 
 ### Viewing Results
 - **PR Checks**: View test results and build status directly on the pull request
 - **Deployment Status**: Check the Actions tab for deployment progress
 - **Live Site**: Access the deployed application via the GitHub Pages URL
+
+### GitHub Pages Configuration
+The app is configured for GitHub Pages subdirectory deployment at `/rocketwords/`. The build process uses `basePath` and `assetPrefix` to ensure all assets load correctly when deployed to the subdirectory.
 
 ## License
 
