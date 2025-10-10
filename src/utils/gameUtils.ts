@@ -43,13 +43,16 @@ export const generateMultipleChoiceOptions = (
 }
 
 /**
- * Generates unique letters from a word for typing games
+ * Generates letter options from a word for typing games, including all letters (duplicates)
  * @param word - The word to extract letters from
- * @returns Array of unique letters, shuffled
+ * @returns Array of all letters with unique identifiers, shuffled
  */
-export const generateUniqueLetters = (word: string): string[] => {
-  const uniqueLetters = [...new Set(word.split(''))]
-  return shuffleArray(uniqueLetters)
+export const generateLetterOptions = (word: string): { letter: string; id: string }[] => {
+  const letters = word.split('').map((letter, index) => ({
+    letter,
+    id: `${letter}-${index}`
+  }))
+  return shuffleArray(letters)
 }
 
 /**

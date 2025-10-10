@@ -1,7 +1,7 @@
 import {
   shuffleArray,
   generateMultipleChoiceOptions,
-  generateUniqueLetters,
+  generateLetterOptions,
   formatWord,
   formatLetter,
 } from '@/utils/gameUtils'
@@ -106,29 +106,36 @@ describe('gameUtils', () => {
     })
   })
 
-  describe('generateUniqueLetters', () => {
-    it('should extract unique letters from a word', () => {
-      const result = generateUniqueLetters('hello')
-      const uniqueLetters = [...new Set('hello'.split(''))]
-      expect(result).toHaveLength(uniqueLetters.length)
-      uniqueLetters.forEach(letter => {
-        expect(result).toContain(letter)
-      })
+  describe('generateLetterOptions', () => {
+    it('should extract all letters from a word including duplicates', () => {
+      const result = generateLetterOptions('hello')
+      expect(result).toHaveLength(5) // h, e, l, l, o
+      expect(result.map(opt => opt.letter)).toEqual(expect.arrayContaining(['h', 'e', 'l', 'l', 'o']))
+      
+      // Check that each letter has a unique id
+      const ids = result.map(opt => opt.id)
+      expect(new Set(ids).size).toBe(5) // All ids should be unique
     })
 
     it('should handle words with repeated letters', () => {
-      const result = generateUniqueLetters('mississippi')
-      const uniqueLetters = [...new Set('mississippi'.split(''))]
-      expect(result).toHaveLength(uniqueLetters.length)
+      const result = generateLetterOptions('book')
+      expect(result).toHaveLength(4) // b, o, o, k
+      
+      // Should have two 'o' letters with different ids
+      const oLetters = result.filter(opt => opt.letter === 'o')
+      expect(oLetters).toHaveLength(2)
+      expect(oLetters[0].id).not.toBe(oLetters[1].id)
     })
 
     it('should handle single letter word', () => {
-      const result = generateUniqueLetters('a')
-      expect(result).toEqual(['a'])
+      const result = generateLetterOptions('a')
+      expect(result).toHaveLength(1)
+      expect(result[0].letter).toBe('a')
+      expect(result[0].id).toBe('a-0')
     })
 
     it('should handle empty string', () => {
-      const result = generateUniqueLetters('')
+      const result = generateLetterOptions('')
       expect(result).toEqual([])
     })
 
@@ -138,12 +145,26 @@ describe('gameUtils', () => {
       
       // Run multiple times to check for shuffling
       for (let i = 0; i < 50; i++) {
-        const letters = generateUniqueLetters(word)
-        results.add(JSON.stringify(letters))
+        const letters = generateLetterOptions(word)
+        results.add(JSON.stringify(letters.map(opt => opt.letter)))
       }
       
       // Should have multiple different arrangements
       expect(results.size).toBeGreaterThan(1)
+    })
+
+    it('should generate unique ids for each letter position', () => {
+      const result = generateLetterOptions('aaa')
+      expect(result).toHaveLength(3)
+      
+      // All should be 'a' but with different ids
+      result.forEach(opt => expect(opt.letter).toBe('a'))
+      
+      const ids = result.map(opt => opt.id)
+      // Should contain all expected ids (order may vary due to shuffling)
+      expect(ids).toEqual(expect.arrayContaining(['a-0', 'a-1', 'a-2']))
+      // All ids should be unique
+      expect(new Set(ids).size).toBe(3)
     })
   })
 

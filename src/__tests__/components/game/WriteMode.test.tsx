@@ -118,7 +118,7 @@ describe('WriteMode', () => {
   it('should display letter buttons for the current word', () => {
     render(<WriteMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />)
     
-    // Should show unique letters from 'cat': c, a, t
+    // Should show all letters from 'cat': c, a, t (all letters including duplicates)
     expect(screen.getByText('C')).toBeInTheDocument()
     expect(screen.getByText('A')).toBeInTheDocument()
     expect(screen.getByText('T')).toBeInTheDocument()
@@ -132,7 +132,10 @@ describe('WriteMode', () => {
     const letterButton = screen.getByText('C')
     await user.click(letterButton)
     
-    expect(screen.getByText('C')).toBeInTheDocument()
+    // C should be removed after correct selection
+    expect(screen.queryByText('C')).not.toBeInTheDocument()
+    // Should show progress in typed word display
+    expect(screen.getByText('C _ _')).toBeInTheDocument()
   })
 
   it('should handle incorrect letter selection', async () => {
@@ -212,15 +215,14 @@ describe('WriteMode', () => {
 
     render(<WriteMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />)
     
-    // Should show unique letters from 'hello': H, E, L, O
+    // Should show all letters from 'hello': H, E, L, L, O (including duplicate L)
     expect(screen.getByText('H')).toBeInTheDocument()
     expect(screen.getByText('E')).toBeInTheDocument()
-    expect(screen.getByText('L')).toBeInTheDocument()
     expect(screen.getByText('O')).toBeInTheDocument()
     
-    // Should not show duplicate L
+    // Should show both L letters (duplicates)
     const lButtons = screen.getAllByText('L')
-    expect(lButtons).toHaveLength(1)
+    expect(lButtons).toHaveLength(2)
   })
 
   it('should not allow clicking buttons when disabled', async () => {
@@ -232,11 +234,103 @@ describe('WriteMode', () => {
     await user.click(screen.getByText('A'))
     await user.click(screen.getByText('T'))
     
-    // Try to click a letter button again
-    const letterButton = screen.getByText('C')
-    await user.click(letterButton)
+    // All buttons should be removed after word completion, and buttons should be disabled
+    expect(screen.queryByText('C')).not.toBeInTheDocument()
+    expect(screen.queryByText('A')).not.toBeInTheDocument()
+    expect(screen.queryByText('T')).not.toBeInTheDocument()
     
-    // Should not call feedback again
+    // Should have called feedback once for completion
     expect(mockOnFeedback).toHaveBeenCalledTimes(1)
+    expect(mockOnFeedback).toHaveBeenCalledWith(true)
+  })
+
+  it('should remove letter button when correctly selected', async () => {
+    const user = userEvent.setup()
+    render(<WriteMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />)
+    
+    // Initially should have all 3 letters
+    expect(screen.getAllByRole('button').filter(btn => 
+      btn.textContent === 'C' || btn.textContent === 'A' || btn.textContent === 'T'
+    )).toHaveLength(3)
+    
+    // Click correct first letter (C)
+    await user.click(screen.getByText('C'))
+    
+    // C button should be removed, but A and T should remain
+    expect(screen.queryByText('C')).not.toBeInTheDocument()
+    expect(screen.getByText('A')).toBeInTheDocument()
+    expect(screen.getByText('T')).toBeInTheDocument()
+  })
+
+  it('should reset all letters when mistake is made', async () => {
+    const user = userEvent.setup()
+    render(<WriteMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />)
+    
+    // Click correct first letter (C)
+    await user.click(screen.getByText('C'))
+    
+    // C should be removed
+    expect(screen.queryByText('C')).not.toBeInTheDocument()
+    
+    // Click incorrect letter (T instead of A)
+    await user.click(screen.getByText('T'))
+    
+    // All letters should be restored after mistake
+    expect(screen.getByText('C')).toBeInTheDocument()
+    expect(screen.getByText('A')).toBeInTheDocument()
+    expect(screen.getByText('T')).toBeInTheDocument()
+    expect(mockOnFeedback).toHaveBeenCalledWith(false)
+  })
+
+  it('should handle duplicate letters correctly', async () => {
+    const user = userEvent.setup()
+    
+    mockUseGame.mockReturnValue({
+      state: createMockGameState({
+        currentWord: 'book',
+        isUpperCase: true,
+      }),
+      dispatch: mockDispatch,
+    })
+
+    mockUseGameModeInitialization.mockImplementation(({ onWordSelected }) => {
+      const mockInit = jest.fn(() => {
+        if (onWordSelected) {
+          onWordSelected('book')
+        }
+      })
+      
+      return {
+        initializeGameMode: mockInit,
+        playCurrentWord: mockPlayCurrentWord,
+      }
+    })
+
+    render(<WriteMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />)
+    
+    // Should have 4 letters total: B, O, O, K (two O's)
+    const allButtons = screen.getAllByRole('button').filter(btn => 
+      btn.textContent === 'B' || btn.textContent === 'O' || btn.textContent === 'K'
+    )
+    expect(allButtons).toHaveLength(4)
+    
+    // Should have exactly 2 O buttons
+    const oButtons = screen.getAllByText('O')
+    expect(oButtons).toHaveLength(2)
+    
+    // Click first letter B
+    await user.click(screen.getByText('B'))
+    
+    // B should be removed, but both O's and K should remain
+    expect(screen.queryByText('B')).not.toBeInTheDocument()
+    expect(screen.getAllByText('O')).toHaveLength(2)
+    expect(screen.getByText('K')).toBeInTheDocument()
+    
+    // Click one of the O's (correct second letter)
+    await user.click(screen.getAllByText('O')[0])
+    
+    // One O should be removed, one O and K should remain
+    expect(screen.getAllByText('O')).toHaveLength(1)
+    expect(screen.getByText('K')).toBeInTheDocument()
   })
 })
