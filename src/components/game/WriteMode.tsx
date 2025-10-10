@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useGame } from '@/context/GameContext'
 import { useGameModeInitialization } from '@/hooks/useGameModeInitialization'
-import { generateUniqueLetters, formatWord, formatLetter } from '@/utils/gameUtils'
+import { generateLetterOptions, formatWord, formatLetter } from '@/utils/gameUtils'
 import CaseToggle from '@/components/CaseToggle'
 import RepeatButton from '@/components/RepeatButton'
 
@@ -16,7 +16,7 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
   const { state, dispatch } = useGame()
   const [currentWord, setCurrentWord] = useState('')
   const [typedWord, setTypedWord] = useState('')
-  const [letterButtons, setLetterButtons] = useState<string[]>([])
+  const [letterButtons, setLetterButtons] = useState<{ letter: string; id: string }[]>([])
   const [buttonsDisabled, setButtonsDisabled] = useState(false)
   
   // Use custom hooks
@@ -26,8 +26,8 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
       setCurrentWord(formatWord(word, state.isUpperCase))
       setTypedWord('')
       setButtonsDisabled(false)
-      const shuffledLetters = generateUniqueLetters(word)
-      setLetterButtons(shuffledLetters)
+      const letterOptions = generateLetterOptions(word)
+      setLetterButtons(letterOptions)
     },
     onEmptyWordList: () => {
       setCurrentWord('ADD WORDS IN PARENT MODE!')
@@ -38,14 +38,20 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
     initializeGameMode()
   }, [initializeGameMode])
 
-  const handleLetterTap = (letter: string) => {
+  const handleLetterTap = (letterId: string) => {
     if (buttonsDisabled) return
+
+    const letterOption = letterButtons.find(btn => btn.id === letterId)
+    if (!letterOption) return
 
     const nextLetter = state.currentWord?.[typedWord.length]
 
-    if (letter === nextLetter) {
-      const newTypedWord = typedWord + letter
+    if (letterOption.letter === nextLetter) {
+      const newTypedWord = typedWord + letterOption.letter
       setTypedWord(newTypedWord)
+      
+      // Remove the selected letter button
+      setLetterButtons(prev => prev.filter(btn => btn.id !== letterId))
       
       if (state.currentWord === newTypedWord) {
         dispatch({ type: 'INCREMENT_SCORE' })
@@ -56,8 +62,13 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
         }, 1500)
       }
     } else {
+      // Reset on mistake: clear typed word and restore all letters
       setTypedWord('')
       onFeedback(false)
+      if (state.currentWord) {
+        const letterOptions = generateLetterOptions(state.currentWord)
+        setLetterButtons(letterOptions)
+      }
     }
   }
 
@@ -97,17 +108,17 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
           </p>
         </div>
       </div>
-      <div className="flex flex-wrap justify-center gap-2 mt-4">
-        {letterButtons.map((letter, index) => (
+      <div className="flex flex-wrap justify-center gap-2 mt-4 min-h-[6rem]">
+        {letterButtons.map((letterOption) => (
           <button
-            key={index}
-            onClick={() => handleLetterTap(letter)}
+            key={letterOption.id}
+            onClick={() => handleLetterTap(letterOption.id)}
             disabled={buttonsDisabled}
             className={`btn-game btn-answer px-6 py-4 rounded-xl text-3xl font-bold hover:scale-110 ${
               buttonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {formatLetter(letter, state.isUpperCase)}
+            {formatLetter(letterOption.letter, state.isUpperCase)}
           </button>
         ))}
       </div>

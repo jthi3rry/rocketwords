@@ -7,7 +7,7 @@ A kid-friendly educational web application for learning words through interactiv
 - **Three Learning Modes:**
   - 👂 **Listen Mode**: Hear words and select the correct one from multiple choice options
   - 📖 **Read Mode**: Read words aloud and confirm understanding
-  - ✍️ **Write Mode**: Type words by selecting letters in order from a letter grid
+  - ✍️ **Write Mode**: Type words by selecting letters in order from a randomized letter grid
 
 - **Parent Management:**
   - Add/remove custom word lists
@@ -120,7 +120,7 @@ src/
 
 - **`shuffleArray`**: Fisher-Yates algorithm for array shuffling
 - **`generateMultipleChoiceOptions`**: Creates multiple choice options for Listen Mode
-- **`generateUniqueLetters`**: Extracts unique letters for Write Mode
+- **`generateLetterOptions`**: Extracts all letters (including duplicates) with unique IDs for Write Mode
 - **`formatWord`** & **`formatLetter`**: Handle case formatting with special "I" handling
 
 ## Game Modes
@@ -138,10 +138,11 @@ src/
 - Case toggle affects word display
 
 ### Write Mode
-- Word appears with a grid of letter buttons
+- Word appears with a grid of letter buttons showing all letters (including duplicates)
 - Child types by selecting letters in correct order
-- Real-time feedback on progress and correctness
-- Unique letters are shuffled for added challenge
+- Selected letters disappear from the grid to show progress
+- Mistakes reset the word and restore all letter buttons
+- Letters are shuffled randomly for added challenge
 
 ## Parent Features
 
