@@ -74,7 +74,7 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
 
   useEffect(() => {
     initializeGameMode()
-  }, []) // Only run on mount
+  }, [initializeGameMode]) // Only run on mount
 
   // Update current word when case changes
   useEffect(() => {

@@ -256,7 +256,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       disableAutoSync()
     }
-  }, [state.userId])
+  }, [state.userId, state.levels, state.lastModified])
 
   // Sync levels to Firestore when they change (debounced)
   // Skip on initial mount and only run when user is authenticated

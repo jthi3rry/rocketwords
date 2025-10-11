@@ -16,6 +16,7 @@ interface UseGameModeInitializationProps {
  */
 export const useGameModeInitialization = (props: UseGameModeInitializationProps) => {
   const { state, dispatch } = useGame()
+  const { onPlayWord, onWordSelected, onEmptyWordList } = props
 
   const handleWordSelection = useCallback((wordList: string[]) => {
     if (wordList.length === 0) return null
@@ -31,23 +32,23 @@ export const useGameModeInitialization = (props: UseGameModeInitializationProps)
 
   const playCurrentWord = useCallback(() => {
     if (state.currentWord) {
-      props.onPlayWord(state.currentWord)
+      onPlayWord(state.currentWord)
     }
-  }, [state.currentWord, props.onPlayWord])
+  }, [state.currentWord, onPlayWord])
 
   const initializeGameMode = useCallback(() => {
     const wordList = state.currentWordList
     if (wordList.length === 0) {
-      props.onEmptyWordList?.()
+      onEmptyWordList?.()
       return null
     }
 
     const newWord = handleWordSelection(wordList)
     if (!newWord) return null
 
-    props.onWordSelected?.(newWord)
+    onWordSelected?.(newWord)
     return newWord
-  }, [handleWordSelection, state.currentWordList, props])
+  }, [handleWordSelection, state.currentWordList, onEmptyWordList, onWordSelected])
 
   return {
     initializeGameMode,

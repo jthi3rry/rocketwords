@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Balsamiq_Sans } from 'next/font/google'
 import './globals.css'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
@@ -13,14 +13,6 @@ export const metadata: Metadata = {
   title: 'Rocket Words - Learn Words Through Play!',
   description: 'A kid-friendly educational web application for learning words through interactive games',
   manifest: './manifest.webmanifest',
-  themeColor: '#1d2b53',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: 'cover',
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -42,6 +34,15 @@ export const metadata: Metadata = {
     'msapplication-TileColor': '#1d2b53',
     'msapplication-config': 'none',
   },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#1d2b53',
 }
 
 export default function RootLayout({

@@ -45,7 +45,7 @@ export default function ReadMode({ onFeedback, onPlayWord }: ReadModeProps) {
 
   useEffect(() => {
     startReadTheWord()
-  }, [])
+  }, [startReadTheWord])
 
   // Update current word when case changes
   useEffect(() => {

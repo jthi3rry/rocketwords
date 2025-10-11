@@ -12,12 +12,13 @@ const requiredEnvVars = {
   NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-// Validate environment variables
+// Validate environment variables (only in browser environment)
 const missingEnvVars = Object.entries(requiredEnvVars)
   .filter(([key, value]) => !value)
   .map(([key]) => key)
 
-if (missingEnvVars.length > 0) {
+// Only throw error in browser environment, not during build/SSR
+if (typeof window !== 'undefined' && missingEnvVars.length > 0) {
   throw new Error(
     `Missing required Firebase environment variables: ${missingEnvVars.join(', ')}. ` +
     'Please check your .env.local file and ensure all Firebase configuration values are set.'

@@ -59,7 +59,7 @@ export default function ListenMode({ onFeedback, onPlayWord }: ListenModeProps) 
 
   useEffect(() => {
     startListenAndTap()
-  }, [])
+  }, [startListenAndTap])
 
 
   if (state.currentWordList.length === 0) {
