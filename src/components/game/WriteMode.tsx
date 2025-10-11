@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useGame } from '@/context/GameContext'
 import { useGameModeInitialization } from '@/hooks/useGameModeInitialization'
 import { generateLetterOptions, formatWord, formatLetter } from '@/utils/gameUtils'
@@ -18,20 +18,26 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
   const [typedWord, setTypedWord] = useState('')
   const [letterButtons, setLetterButtons] = useState<{ letter: string; id: string }[]>([])
   const [buttonsDisabled, setButtonsDisabled] = useState(false)
+  const hasInitialized = useRef(false)
   
+  // Memoize callbacks to prevent unnecessary re-renders
+  const onWordSelected = useCallback((word: string) => {
+    setCurrentWord(formatWord(word, state.isUpperCase))
+    setTypedWord('')
+    setButtonsDisabled(false)
+    const letterOptions = generateLetterOptions(word)
+    setLetterButtons(letterOptions)
+  }, [])
+
+  const onEmptyWordList = useCallback(() => {
+    setCurrentWord('ADD WORDS IN PARENT MODE!')
+  }, [])
+
   // Use custom hooks
   const { initializeGameMode, playCurrentWord } = useGameModeInitialization({
     onPlayWord,
-    onWordSelected: (word) => {
-      setCurrentWord(formatWord(word, state.isUpperCase))
-      setTypedWord('')
-      setButtonsDisabled(false)
-      const letterOptions = generateLetterOptions(word)
-      setLetterButtons(letterOptions)
-    },
-    onEmptyWordList: () => {
-      setCurrentWord('ADD WORDS IN PARENT MODE!')
-    }
+    onWordSelected,
+    onEmptyWordList
   })
 
   const startTypeTheWord = useCallback(() => {
@@ -73,8 +79,11 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
   }
 
   useEffect(() => {
-    initializeGameMode()
-  }, [initializeGameMode]) // Only run on mount
+    if (!hasInitialized.current) {
+      hasInitialized.current = true
+      initializeGameMode()
+    }
+  }, []) // Only run on mount
 
   // Update current word when case changes
   useEffect(() => {
@@ -82,6 +91,14 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
       setCurrentWord(formatWord(state.currentWord, state.isUpperCase))
     }
   }, [state.isUpperCase, state.currentWord])
+
+  // Set up letter buttons when current word changes
+  useEffect(() => {
+    if (state.currentWord) {
+      const letterOptions = generateLetterOptions(state.currentWord)
+      setLetterButtons(letterOptions)
+    }
+  }, [state.currentWord])
 
   const displayTypedWord = () => {
     if (!state.currentWord) return ''

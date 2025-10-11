@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useGame } from '@/context/GameContext'
 import { useGameModeInitialization } from '@/hooks/useGameModeInitialization'
 import { generateMultipleChoiceOptions, formatWord } from '@/utils/gameUtils'
@@ -17,20 +17,26 @@ export default function ListenMode({ onFeedback, onPlayWord }: ListenModeProps) 
   const [options, setOptions] = useState<string[]>([])
   const [buttonsDisabled, setButtonsDisabled] = useState(false)
   const [disabledButtons, setDisabledButtons] = useState(new Set<string>())
+  const hasInitialized = useRef(false)
   
+  // Memoize callbacks to prevent unnecessary re-renders
+  const onWordSelected = useCallback((word: string) => {
+    const optionWords = generateMultipleChoiceOptions(word, state.currentWordList, 4)
+    setOptions(optionWords)
+    setButtonsDisabled(false)
+    setDisabledButtons(new Set())
+    onPlayWord(word)
+  }, [])
+
+  const onEmptyWordList = useCallback(() => {
+    setOptions([])
+  }, [])
+
   // Use custom hooks
   const { initializeGameMode, playCurrentWord } = useGameModeInitialization({
     onPlayWord,
-    onWordSelected: (word) => {
-      const optionWords = generateMultipleChoiceOptions(word, state.currentWordList, 4)
-      setOptions(optionWords)
-      setButtonsDisabled(false)
-      setDisabledButtons(new Set())
-      onPlayWord(word)
-    },
-    onEmptyWordList: () => {
-      setOptions([])
-    }
+    onWordSelected,
+    onEmptyWordList
   })
 
   const startListenAndTap = useCallback(() => {
@@ -58,8 +64,11 @@ export default function ListenMode({ onFeedback, onPlayWord }: ListenModeProps) 
 
 
   useEffect(() => {
-    startListenAndTap()
-  }, [startListenAndTap])
+    if (!hasInitialized.current) {
+      hasInitialized.current = true
+      startListenAndTap()
+    }
+  }, []) // Only run on mount
 
 
   if (state.currentWordList.length === 0) {

@@ -28,7 +28,7 @@ export const useGameModeInitialization = (props: UseGameModeInitializationProps)
 
     dispatch({ type: 'SET_CURRENT_WORD', payload: newWord })
     return newWord
-  }, [state.currentWord, dispatch])
+  }, [dispatch])
 
   const playCurrentWord = useCallback(() => {
     if (state.currentWord) {
