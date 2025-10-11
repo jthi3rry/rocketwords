@@ -2,7 +2,7 @@
 
 import { useGame } from '@/context/GameContext'
 
-export default function CaseToggle() {
+export default function CaseToggleButton() {
   const { state, dispatch } = useGame()
 
   const handleToggle = () => {
@@ -19,3 +19,4 @@ export default function CaseToggle() {
     </button>
   )
 }
+

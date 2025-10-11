@@ -1,6 +1,7 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react'
+import { syncToFirestore, syncFromFirestore, mergeData, enableAutoSync, disableAutoSync, SyncStatus } from '@/utils/firebaseSync'
 
 interface Level {
   name: string
@@ -17,6 +18,9 @@ interface GameState {
   currentScreen: string
   isParentLoggedIn: boolean
   isUpperCase: boolean
+  userId: string | null
+  syncStatus: SyncStatus
+  lastModified?: number
 }
 
 interface GameContextType {
@@ -40,6 +44,10 @@ type GameAction =
   | { type: 'SET_PARENT_LOGIN'; payload: boolean }
   | { type: 'TOGGLE_CASE' }
   | { type: 'RESET_GAME' }
+  | { type: 'SET_USER_ID'; payload: string | null }
+  | { type: 'SET_SYNC_STATUS'; payload: SyncStatus }
+  | { type: 'SYNC_LEVELS'; payload: { levels: Record<string, Level>; lastModified: number } }
+  | { type: 'UPDATE_LAST_MODIFIED' }
 
 const GameContext = createContext<GameContextType | undefined>(undefined)
 
@@ -55,7 +63,10 @@ const initialState: GameState = {
   currentLevelName: '',
   currentScreen: 'welcome',
   isParentLoggedIn: false,
-  isUpperCase: true
+  isUpperCase: true,
+  userId: null,
+  syncStatus: 'idle',
+  lastModified: 0 // Start at 0 so Firebase data is always newer until local changes are made
 }
 
 const gameReducer = (state: GameState, action: GameAction): GameState => {
@@ -89,13 +100,14 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
     case 'ADD_LEVEL':
       return {
         ...state,
-        levels: { ...state.levels, [action.payload.key]: action.payload.level }
+        levels: { ...state.levels, [action.payload.key]: action.payload.level },
+        lastModified: Date.now()
       }
     
     case 'REMOVE_LEVEL':
       const newLevels = { ...state.levels }
       delete newLevels[action.payload]
-      return { ...state, levels: newLevels }
+      return { ...state, levels: newLevels, lastModified: Date.now() }
     
     case 'UPDATE_LEVEL_NAME':
       return {
@@ -106,7 +118,8 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
             ...state.levels[action.payload.key],
             name: action.payload.name
           }
-        }
+        },
+        lastModified: Date.now()
       }
     
     case 'ADD_WORD':
@@ -118,7 +131,8 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
             ...state.levels[action.payload.levelKey],
             words: [...state.levels[action.payload.levelKey].words, action.payload.word]
           }
-        }
+        },
+        lastModified: Date.now()
       }
     
     case 'REMOVE_WORD':
@@ -132,7 +146,8 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
               word => word !== action.payload.word
             )
           }
-        }
+        },
+        lastModified: Date.now()
       }
     
     case 'SET_PARENT_LOGIN':
@@ -151,6 +166,22 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         currentLevelName: ''
       }
     
+    case 'SET_USER_ID':
+      return { ...state, userId: action.payload }
+    
+    case 'SET_SYNC_STATUS':
+      return { ...state, syncStatus: action.payload }
+    
+    case 'SYNC_LEVELS':
+      return { 
+        ...state, 
+        levels: action.payload.levels,
+        lastModified: action.payload.lastModified
+      }
+    
+    case 'UPDATE_LAST_MODIFIED':
+      return { ...state, lastModified: Date.now() }
+    
     default:
       return state
   }
@@ -158,6 +189,9 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
 
 export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(gameReducer, initialState)
+  const isSyncInitialized = useRef(false)
+  const isInitialMount = useRef(true)
+  const previousLevelsRef = useRef<string>('')
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -176,6 +210,93 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [state])
 
+  // Sync with Firestore when user is authenticated
+  useEffect(() => {
+    if (!state.userId) {
+      disableAutoSync()
+      isSyncInitialized.current = false
+      return
+    }
+
+    // Skip if already initialized for this user
+    if (isSyncInitialized.current) return
+
+    const initSync = async () => {
+      try {
+        dispatch({ type: 'SET_SYNC_STATUS', payload: 'syncing' })
+        
+        // Merge local and remote data with timestamps
+        // Use ?? instead of || to allow 0 as a valid timestamp
+        const result = await mergeData(state.userId!, state.levels, state.lastModified ?? Date.now())
+        dispatch({ type: 'SYNC_LEVELS', payload: result })
+        
+        // Enable real-time sync
+        enableAutoSync(
+          state.userId!,
+          (levels, lastModified) => {
+            dispatch({ type: 'SYNC_LEVELS', payload: { levels, lastModified } })
+            dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' })
+          },
+          (error) => {
+            console.error('Sync error:', error)
+            dispatch({ type: 'SET_SYNC_STATUS', payload: 'error' })
+          }
+        )
+        
+        dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' })
+        isSyncInitialized.current = true
+      } catch (error) {
+        console.error('Initial sync error:', error)
+        dispatch({ type: 'SET_SYNC_STATUS', payload: 'error' })
+      }
+    }
+
+    initSync()
+
+    return () => {
+      disableAutoSync()
+    }
+  }, [state.userId, state.levels, state.lastModified])
+
+  // Sync levels to Firestore when they change (debounced)
+  // Skip on initial mount and only run when user is authenticated
+  useEffect(() => {
+    // Skip initial mount (when data is loaded from localStorage)
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      previousLevelsRef.current = JSON.stringify(state.levels)
+      return
+    }
+
+    // Only sync if user is authenticated and sync is initialized
+    if (!state.userId || !isSyncInitialized.current) return
+
+    // Check if levels actually changed (deep comparison via JSON)
+    const currentLevelsString = JSON.stringify(state.levels)
+    if (previousLevelsRef.current === currentLevelsString) {
+      // No changes to levels, skip sync
+      return
+    }
+
+    // Update the reference to current levels
+    previousLevelsRef.current = currentLevelsString
+
+    // Debounced sync with increased delay for fewer writes
+    const syncTimer = setTimeout(async () => {
+      if (!state.userId) return // Double check in async context
+      
+      try {
+        dispatch({ type: 'SET_SYNC_STATUS', payload: 'syncing' })
+        await syncToFirestore(state.userId, state.levels)
+        dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' })
+            } catch (error) {
+              console.error('Sync error:', error)
+              dispatch({ type: 'SET_SYNC_STATUS', payload: 'error' })
+            }
+    }, 2000) // Increased to 2 seconds for better batching
+
+    return () => clearTimeout(syncTimer)
+  }, [state.levels, state.userId])
 
   return (
     <GameContext.Provider value={{ state, dispatch }}>

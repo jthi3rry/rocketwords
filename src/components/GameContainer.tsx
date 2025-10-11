@@ -1,16 +1,29 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useGame } from '@/context/GameContext'
+import { useAuth } from '@/context/AuthContext'
 import WelcomeScreen from './WelcomeScreen'
 import LevelScreen from './LevelScreen'
 import ModeScreen from './ModeScreen'
 import GameScreen from './GameScreen'
 import ParentLoginScreen from './ParentLoginScreen'
 import ParentModeScreen from './ParentModeScreen'
+import AccountManagementScreen from './AccountManagementScreen'
 import Feedback from './Feedback'
 
 export default function GameContainer() {
-  const { state } = useGame()
+  const { state, dispatch } = useGame()
+  const { user } = useAuth()
+
+  // Sync user ID with GameContext when auth state changes
+  useEffect(() => {
+    if (user) {
+      dispatch({ type: 'SET_USER_ID', payload: user.uid })
+    } else {
+      dispatch({ type: 'SET_USER_ID', payload: null })
+    }
+  }, [user, dispatch])
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -21,6 +34,7 @@ export default function GameContainer() {
         <GameScreen />
         <ParentLoginScreen />
         <ParentModeScreen />
+        <AccountManagementScreen />
         <Feedback />
       </div>
     </div>

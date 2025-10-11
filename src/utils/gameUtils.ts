@@ -2,6 +2,11 @@
  * Pure utility functions for game logic
  */
 
+interface Level {
+  name: string
+  words: string[]
+}
+
 /**
  * Shuffles an array in place using Fisher-Yates algorithm
  * @param array - The array to shuffle
@@ -80,5 +85,41 @@ export const formatWord = (word: string, isUpperCase: boolean): string => {
 export const formatLetter = (letter: string, isUpperCase: boolean): string => {
   // Apply case based on toggle without special "I" handling for letter buttons
   return isUpperCase ? letter.toUpperCase() : letter.toLowerCase()
+}
+
+/**
+ * Sorts level keys by level name in ascending order
+ * @param levels - The levels object
+ * @returns Array of level keys sorted by name
+ */
+export const getSortedLevelKeys = (levels: Record<string, Level>): string[] => {
+  return Object.keys(levels).sort((a, b) => 
+    levels[a].name.localeCompare(levels[b].name)
+  )
+}
+
+/**
+ * Gets the first level key after sorting by name
+ * @param levels - The levels object
+ * @returns The first level key alphabetically, or null if no levels
+ */
+export const getFirstLevelKey = (levels: Record<string, Level>): string | null => {
+  const sortedKeys = getSortedLevelKeys(levels)
+  return sortedKeys.length > 0 ? sortedKeys[0] : null
+}
+
+/**
+ * Gets level keys excluding a specific level, sorted by name
+ * @param levels - The levels object
+ * @param excludeKey - The level key to exclude
+ * @returns Array of level keys (excluding the specified one) sorted by name
+ */
+export const getSortedLevelKeysExcluding = (
+  levels: Record<string, Level>, 
+  excludeKey: string
+): string[] => {
+  return Object.keys(levels)
+    .filter(key => key !== excludeKey)
+    .sort((a, b) => levels[a].name.localeCompare(levels[b].name))
 }
 

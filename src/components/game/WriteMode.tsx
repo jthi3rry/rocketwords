@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useGame } from '@/context/GameContext'
 import { useGameModeInitialization } from '@/hooks/useGameModeInitialization'
 import { generateLetterOptions, formatWord, formatLetter } from '@/utils/gameUtils'
-import CaseToggle from '@/components/CaseToggle'
+import CaseToggleButton from '@/components/CaseToggleButton'
 import RepeatButton from '@/components/RepeatButton'
 
 interface WriteModeProps {
@@ -18,20 +18,26 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
   const [typedWord, setTypedWord] = useState('')
   const [letterButtons, setLetterButtons] = useState<{ letter: string; id: string }[]>([])
   const [buttonsDisabled, setButtonsDisabled] = useState(false)
+  const hasInitialized = useRef(false)
   
+  // Memoize callbacks to prevent unnecessary re-renders
+  const onWordSelected = useCallback((word: string) => {
+    setCurrentWord(formatWord(word, state.isUpperCase))
+    setTypedWord('')
+    setButtonsDisabled(false)
+    const letterOptions = generateLetterOptions(word)
+    setLetterButtons(letterOptions)
+  }, [])
+
+  const onEmptyWordList = useCallback(() => {
+    setCurrentWord('ADD WORDS IN PARENT MODE!')
+  }, [])
+
   // Use custom hooks
   const { initializeGameMode, playCurrentWord } = useGameModeInitialization({
     onPlayWord,
-    onWordSelected: (word) => {
-      setCurrentWord(formatWord(word, state.isUpperCase))
-      setTypedWord('')
-      setButtonsDisabled(false)
-      const letterOptions = generateLetterOptions(word)
-      setLetterButtons(letterOptions)
-    },
-    onEmptyWordList: () => {
-      setCurrentWord('ADD WORDS IN PARENT MODE!')
-    }
+    onWordSelected,
+    onEmptyWordList
   })
 
   const startTypeTheWord = useCallback(() => {
@@ -73,7 +79,10 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
   }
 
   useEffect(() => {
-    initializeGameMode()
+    if (!hasInitialized.current) {
+      hasInitialized.current = true
+      initializeGameMode()
+    }
   }, []) // Only run on mount
 
   // Update current word when case changes
@@ -82,6 +91,14 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
       setCurrentWord(formatWord(state.currentWord, state.isUpperCase))
     }
   }, [state.isUpperCase, state.currentWord])
+
+  // Set up letter buttons when current word changes
+  useEffect(() => {
+    if (state.currentWord) {
+      const letterOptions = generateLetterOptions(state.currentWord)
+      setLetterButtons(letterOptions)
+    }
+  }, [state.currentWord])
 
   const displayTypedWord = () => {
     if (!state.currentWord) return ''
@@ -96,7 +113,7 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
     <div className="flex flex-col items-center justify-center w-full">
       <div className="flex items-center gap-4 mb-8">
         <RepeatButton />
-        <CaseToggle />
+        <CaseToggleButton />
       </div>
       <div className="flex flex-col items-center w-full max-w-xl">
         <div className="p-8 bg-gray-800 rounded-3xl w-full text-center mb-8 shadow-md">

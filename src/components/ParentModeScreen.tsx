@@ -2,18 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { useGame } from '@/context/GameContext'
+import { useAuth } from '@/context/AuthContext'
+import SyncStatusIndicator from './SyncStatusIndicator'
+import { getFirstLevelKey, getSortedLevelKeys, getSortedLevelKeysExcluding } from '@/utils/gameUtils'
 
 export default function ParentModeScreen() {
   const { state, dispatch } = useGame()
+  const { user } = useAuth()
   const [selectedLevel, setSelectedLevel] = useState('')
   const [newLevelName, setNewLevelName] = useState('')
   const [levelName, setLevelName] = useState('')
   const [newWord, setNewWord] = useState('')
 
   useEffect(() => {
-    const levelKeys = Object.keys(state.levels)
-    if (levelKeys.length > 0 && !selectedLevel) {
-      setSelectedLevel(levelKeys[0])
+    const firstLevelKey = getFirstLevelKey(state.levels)
+    if (firstLevelKey && !selectedLevel) {
+      setSelectedLevel(firstLevelKey)
     }
   }, [state.levels, selectedLevel])
 
@@ -44,7 +48,7 @@ export default function ParentModeScreen() {
   const handleRemoveLevel = () => {
     if (Object.keys(state.levels).length > 1) {
       dispatch({ type: 'REMOVE_LEVEL', payload: selectedLevel })
-      const remainingKeys = Object.keys(state.levels).filter(key => key !== selectedLevel)
+      const remainingKeys = getSortedLevelKeysExcluding(state.levels, selectedLevel)
       setSelectedLevel(remainingKeys[0] || '')
     }
   }
@@ -92,6 +96,10 @@ export default function ParentModeScreen() {
     dispatch({ type: 'SET_SCREEN', payload: 'welcome' })
   }
 
+  const handleAccountManagement = () => {
+    dispatch({ type: 'SET_SCREEN', payload: 'accountManagement' })
+  }
+
   const currentWords = selectedLevel ? (state.levels[selectedLevel]?.words || []) : []
   const canRemoveLevel = Object.keys(state.levels).length > 1
 
@@ -102,6 +110,33 @@ export default function ParentModeScreen() {
   return (
     <div className="flex flex-col items-center justify-start p-8 h-full w-full transition-opacity duration-500 overflow-y-auto">
       <h2 className="text-3xl md:text-4xl font-extrabold text-blue-400 mb-6">Manage Words & Levels</h2>
+      
+      {/* Account Management Section */}
+      <div className="w-full max-w-lg mb-6">
+        <div className="bg-gray-800 p-4 rounded-xl border-2 border-gray-600">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              {user ? (
+                <div>
+                  <p className="text-sm text-gray-400">Signed in as:</p>
+                  <p className="text-white font-semibold break-all">{user.email}</p>
+                </div>
+              ) : (
+                <p className="text-gray-300">Sign in to sync your levels across devices</p>
+              )}
+            </div>
+            <div className="flex items-center gap-3 ml-4">
+              {user && <SyncStatusIndicator status={state.syncStatus} variant="pill" />}
+              <button
+                onClick={handleAccountManagement}
+                className="btn-game px-4 py-2 rounded-full text-sm font-bold text-white bg-blue-500 hover:bg-blue-600 transition-colors whitespace-nowrap"
+              >
+                {user ? 'Account' : 'Sign In'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       
       {/* Add/Remove Level Section */}
       <div className="w-full max-w-lg mb-6 flex flex-col md:flex-row gap-2 items-center">
@@ -137,7 +172,7 @@ export default function ParentModeScreen() {
           onChange={(e) => setSelectedLevel(e.target.value)}
           className="w-full p-3 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-center text-lg bg-gray-800 text-white"
         >
-          {Object.keys(state.levels).map(key => (
+          {getSortedLevelKeys(state.levels).map(key => (
             <option key={key} value={key}>
               {state.levels[key].name}
             </option>

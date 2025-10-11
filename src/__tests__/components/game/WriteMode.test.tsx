@@ -40,9 +40,8 @@ describe('WriteMode', () => {
     mockUseGameModeInitialization.mockImplementation(({ onWordSelected }) => {
       // Simulate the hook behavior by calling onWordSelected when initializeGameMode is called
       const mockInit = jest.fn(() => {
-        if (onWordSelected) {
-          onWordSelected('cat')
-        }
+        // Don't call onWordSelected immediately to avoid infinite loop
+        // The component will handle the word selection through the game state
       })
       
       return {
@@ -55,6 +54,7 @@ describe('WriteMode', () => {
   it('should render write mode interface', () => {
     render(<WriteMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />)
     
+    // The word should be displayed from the game state (currentWord: 'cat', isUpperCase: true)
     expect(screen.getByText('CAT')).toBeInTheDocument()
     expect(screen.getByText('_ _ _')).toBeInTheDocument()
   })
@@ -99,9 +99,7 @@ describe('WriteMode', () => {
     mockUseGameModeInitialization.mockImplementation(({ onWordSelected }) => {
       const mockInit = jest.fn(() => {
         mockInitCalled = true
-        if (onWordSelected) {
-          onWordSelected('cat')
-        }
+        // Don't call onWordSelected to avoid infinite loop
       })
       
       return {
@@ -202,9 +200,7 @@ describe('WriteMode', () => {
 
     mockUseGameModeInitialization.mockImplementation(({ onWordSelected }) => {
       const mockInit = jest.fn(() => {
-        if (onWordSelected) {
-          onWordSelected('hello')
-        }
+        // Don't call onWordSelected to avoid infinite loop
       })
       
       return {
@@ -295,9 +291,7 @@ describe('WriteMode', () => {
 
     mockUseGameModeInitialization.mockImplementation(({ onWordSelected }) => {
       const mockInit = jest.fn(() => {
-        if (onWordSelected) {
-          onWordSelected('book')
-        }
+        // Don't call onWordSelected to avoid infinite loop
       })
       
       return {

@@ -31,7 +31,10 @@ describe('GameContext', () => {
         currentLevelName: '',
         currentScreen: 'welcome',
         isParentLoggedIn: false,
-        isUpperCase: true
+        isUpperCase: true,
+        userId: null,
+        syncStatus: 'idle',
+        lastModified: 0
       })
       expect(result.current.dispatch).toBeDefined()
     })

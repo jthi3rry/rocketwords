@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useGame } from '@/context/GameContext'
 import { useGameModeInitialization } from '@/hooks/useGameModeInitialization'
 import { formatWord } from '@/utils/gameUtils'
-import CaseToggle from '@/components/CaseToggle'
+import CaseToggleButton from '@/components/CaseToggleButton'
 import RepeatButton from '@/components/RepeatButton'
 
 interface ReadModeProps {
@@ -15,16 +15,22 @@ interface ReadModeProps {
 export default function ReadMode({ onFeedback, onPlayWord }: ReadModeProps) {
   const { state, dispatch } = useGame()
   const [currentWord, setCurrentWord] = useState('')
+  const hasInitialized = useRef(false)
   
+  // Memoize callbacks to prevent unnecessary re-renders
+  const onWordSelected = useCallback((word: string) => {
+    setCurrentWord(formatWord(word, state.isUpperCase))
+  }, [])
+
+  const onEmptyWordList = useCallback(() => {
+    setCurrentWord('ADD WORDS IN PARENT MODE!')
+  }, [])
+
   // Use custom hooks
   const { initializeGameMode, playCurrentWord } = useGameModeInitialization({
     onPlayWord,
-    onWordSelected: (word) => {
-      setCurrentWord(formatWord(word, state.isUpperCase))
-    },
-    onEmptyWordList: () => {
-      setCurrentWord('ADD WORDS IN PARENT MODE!')
-    }
+    onWordSelected,
+    onEmptyWordList
   })
 
 
@@ -44,8 +50,11 @@ export default function ReadMode({ onFeedback, onPlayWord }: ReadModeProps) {
 
 
   useEffect(() => {
-    startReadTheWord()
-  }, [])
+    if (!hasInitialized.current) {
+      hasInitialized.current = true
+      startReadTheWord()
+    }
+  }, []) // Only run on mount
 
   // Update current word when case changes
   useEffect(() => {
@@ -58,7 +67,7 @@ export default function ReadMode({ onFeedback, onPlayWord }: ReadModeProps) {
     <div className="flex flex-col items-center justify-center w-full">
       <div className="flex items-center gap-4 mb-8">
         <RepeatButton />
-        <CaseToggle />
+        <CaseToggleButton />
       </div>
       <div 
         className="p-8 bg-gray-800 rounded-3xl w-full max-w-2xl text-center mb-8 shadow-md"
