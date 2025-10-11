@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ParentModeScreen from '@/components/ParentModeScreen'
-import { renderWithGameContext, createMockGameState } from '../testUtils'
+import { renderWithGameContext, renderWithProviders, createMockGameState } from '../testUtils'
 
 // Mock the useGame hook
 jest.mock('@/context/GameContext', () => ({
@@ -31,21 +31,21 @@ describe('ParentModeScreen', () => {
   })
 
   it('should render parent mode interface', () => {
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     expect(screen.getByText('Manage Words & Levels')).toBeInTheDocument()
     expect(screen.getByText('Current Words:')).toBeInTheDocument()
   })
 
   it('should display existing levels', () => {
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     expect(screen.getByText('Level 1')).toBeInTheDocument()
     expect(screen.getByText('Level 2')).toBeInTheDocument()
   })
 
   it('should display words for selected level', () => {
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     // Should show words from first level by default
     expect(screen.getByText('cat')).toBeInTheDocument()
@@ -54,7 +54,7 @@ describe('ParentModeScreen', () => {
 
   it('should add a new level', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     const newLevelInput = screen.getByPlaceholderText('New Level Name')
     const addLevelButton = screen.getByText('Add Level')
@@ -73,7 +73,7 @@ describe('ParentModeScreen', () => {
 
   it('should not add level with empty name', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     const addLevelButton = screen.getByText('Add Level')
     await user.click(addLevelButton)
@@ -83,7 +83,7 @@ describe('ParentModeScreen', () => {
 
   it('should remove a level when more than one exists', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     // Get the level remove button (not the word remove buttons) - it's the first one
     const removeButtons = screen.getAllByRole('button', { name: /remove/i })
@@ -107,7 +107,7 @@ describe('ParentModeScreen', () => {
       dispatch: mockDispatch,
     })
 
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     // Get the level remove button (not the word remove buttons) - it's the first one
     const removeButtons = screen.getAllByRole('button', { name: /remove/i })
@@ -117,7 +117,7 @@ describe('ParentModeScreen', () => {
 
   it('should update level name', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     // Get the level name input (not the select)
     const levelNameInput = screen.getByPlaceholderText('Edit Level Name')
@@ -138,7 +138,7 @@ describe('ParentModeScreen', () => {
 
   it('should add a word to current level', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     const newWordInput = screen.getByPlaceholderText('Add new word')
     const addWordButton = screen.getByText('Add Word')
@@ -157,7 +157,7 @@ describe('ParentModeScreen', () => {
 
   it('should not add duplicate word', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     const newWordInput = screen.getByPlaceholderText('Add new word')
     const addWordButton = screen.getByText('Add Word')
@@ -170,7 +170,7 @@ describe('ParentModeScreen', () => {
 
   it('should not add empty word', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     const addWordButton = screen.getByText('Add Word')
     await user.click(addWordButton)
@@ -180,7 +180,7 @@ describe('ParentModeScreen', () => {
 
   it('should remove a word from current level', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     // Get the word remove buttons (not the level remove button)
     const removeButtons = screen.getAllByRole('button', { name: /remove/i })
@@ -198,7 +198,7 @@ describe('ParentModeScreen', () => {
 
   it('should switch between levels', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     // Get the select element specifically
     const levelSelect = screen.getByRole('combobox')
@@ -211,7 +211,7 @@ describe('ParentModeScreen', () => {
 
   it('should convert words to lowercase when adding', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     const newWordInput = screen.getByPlaceholderText('Add new word')
     const addWordButton = screen.getByText('Add Word')
@@ -230,7 +230,7 @@ describe('ParentModeScreen', () => {
 
   it('should clear input after adding word', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     const newWordInput = screen.getByPlaceholderText('Add new word')
     const addWordButton = screen.getByText('Add Word')
@@ -243,7 +243,7 @@ describe('ParentModeScreen', () => {
 
   it('should clear input after adding level', async () => {
     const user = userEvent.setup()
-    render(<ParentModeScreen />)
+    renderWithProviders(<ParentModeScreen />)
     
     const newLevelInput = screen.getByPlaceholderText('New Level Name')
     const addLevelButton = screen.getByText('Add Level')
@@ -266,7 +266,7 @@ describe('ParentModeScreen', () => {
       dispatch: mockDispatch,
     })
 
-    const { rerender } = render(<ParentModeScreen />)
+    const { rerender } = renderWithProviders(<ParentModeScreen />)
     
     // Add another level
     mockUseGame.mockReturnValue({

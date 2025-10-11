@@ -87,6 +87,11 @@ export const mergeData = async (
     }
 
     const remoteData = docSnap.data() as FirestoreData
+    if (!remoteData.lastModified) {
+      // If remote data has no timestamp, use local data
+      await syncToFirestore(userId, localLevels)
+      return { levels: localLevels, lastModified: localLastModified }
+    }
     const remoteTimestamp = remoteData.lastModified.toMillis()
 
 
@@ -152,6 +157,9 @@ export const disableAutoSync = (): void => {
  * Check if offline
  */
 export const isOffline = (): boolean => {
-  return typeof window !== 'undefined' && !navigator.onLine
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    return false // Server-side, assume online
+  }
+  return !navigator.onLine
 }
 

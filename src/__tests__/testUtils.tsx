@@ -1,7 +1,14 @@
 import React from 'react'
 import { render, RenderOptions } from '@testing-library/react'
-import { GameProvider } from '@/context/GameContext'
 import { GameState } from '@/context/GameContext'
+import { AuthProvider } from '@/context/AuthContext'
+import { 
+  createMockUser as createFirebaseMockUser, 
+  createMockFirestoreData as createFirebaseMockData, 
+  mockAuthStateManager,
+  mockFirestoreManager,
+  clearAllFirebaseMocks 
+} from './mocks/firebaseMocks'
 
 // This file contains test utilities and should not be run as a test
 
@@ -36,10 +43,21 @@ export const renderWithGameContext = (
   ui: React.ReactElement,
   { initialState = {}, ...renderOptions }: CustomRenderOptions = {}
 ) => {
-  const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <GameProvider>{children}</GameProvider>
-  )
+  // Since GameProvider is mocked globally, just render without wrapper
+  return render(ui, { ...renderOptions })
+}
 
+// Custom render function that includes both GameContext and AuthContext
+export const renderWithProviders = (
+  ui: React.ReactElement,
+  { initialState = {}, ...renderOptions }: CustomRenderOptions = {}
+) => {
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <AuthProvider>
+      {children}
+    </AuthProvider>
+  )
+  
   return render(ui, { wrapper: Wrapper, ...renderOptions })
 }
 
@@ -73,4 +91,30 @@ export const resetAllMocks = () => {
   mockLocalStorage.setItem.mockClear()
   mockLocalStorage.removeItem.mockClear()
   mockLocalStorage.clear.mockClear()
+  clearAllFirebaseMocks()
 }
+
+// Firebase testing helpers
+export const createMockUser = (overrides = {}) => createFirebaseMockUser(overrides)
+export const createMockFirestoreData = (overrides = {}) => createFirebaseMockData(overrides)
+
+// Auth state helpers
+export const setMockAuthUser = (user: any) => {
+  mockAuthStateManager.setUser(user)
+}
+
+export const clearMockAuthUser = () => {
+  mockAuthStateManager.setUser(null)
+}
+
+// Firestore helpers
+export const setMockFirestoreData = (path: string, data: any) => {
+  mockFirestoreManager.setDocument(path, data)
+}
+
+export const clearMockFirestoreData = (path: string) => {
+  mockFirestoreManager.clearDocument(path)
+}
+
+// Wait for auth state change
+export const waitForAuthStateChange = () => new Promise(resolve => setTimeout(resolve, 0))

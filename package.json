@@ -11,6 +11,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:integration": "firebase emulators:exec --only auth,firestore 'jest --config=jest.integration.config.js'",
+    "test:integration:watch": "firebase emulators:exec --only auth,firestore 'jest --config=jest.integration.config.js --watch'",
     "emulators": "firebase emulators:start",
     "emulators:ui": "open http://localhost:4000"
   },
@@ -37,7 +39,8 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
     "ts-node": "^10.9.2",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "whatwg-fetch": "^3.6.20"
   },
   "keywords": [
     "education",

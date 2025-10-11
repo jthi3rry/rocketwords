@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import CaseToggle from '@/components/CaseToggle'
+import CaseToggleButton from '@/components/CaseToggleButton'
 import { renderWithGameContext, createMockGameState } from '../testUtils'
 
 // Mock the useGame hook
@@ -12,7 +12,7 @@ import { useGame } from '@/context/GameContext'
 const mockUseGame = useGame as jest.MockedFunction<typeof useGame>
 const mockDispatch = jest.fn()
 
-describe('CaseToggle', () => {
+describe('CaseToggleButton', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
@@ -23,7 +23,7 @@ describe('CaseToggle', () => {
       dispatch: mockDispatch,
     })
 
-    render(<CaseToggle />)
+    render(<CaseToggleButton />)
     
     const button = screen.getByRole('button')
     expect(button).toBeInTheDocument()
@@ -37,7 +37,7 @@ describe('CaseToggle', () => {
       dispatch: mockDispatch,
     })
 
-    render(<CaseToggle />)
+    render(<CaseToggleButton />)
     
     const button = screen.getByRole('button')
     expect(button).toBeInTheDocument()
@@ -51,7 +51,7 @@ describe('CaseToggle', () => {
       dispatch: mockDispatch,
     })
 
-    render(<CaseToggle />)
+    render(<CaseToggleButton />)
     
     const button = screen.getByRole('button')
     fireEvent.click(button)
@@ -65,7 +65,7 @@ describe('CaseToggle', () => {
       dispatch: mockDispatch,
     })
 
-    render(<CaseToggle />)
+    render(<CaseToggleButton />)
     
     const button = screen.getByRole('button')
     expect(button).toHaveClass('btn-game', 'btn-mode', 'p-3', 'rounded-full', 'text-2xl', 'font-bold')
@@ -77,10 +77,11 @@ describe('CaseToggle', () => {
       dispatch: mockDispatch,
     })
 
-    render(<CaseToggle />)
+    render(<CaseToggleButton />)
     
     const button = screen.getByRole('button')
     expect(button).toHaveAttribute('title')
     expect(button).toBeEnabled()
   })
 })
+

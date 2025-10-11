@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useGame } from '@/context/GameContext'
 import { useGameModeInitialization } from '@/hooks/useGameModeInitialization'
 import { generateMultipleChoiceOptions, formatWord } from '@/utils/gameUtils'
-import CaseToggle from '@/components/CaseToggle'
+import CaseToggleButton from '@/components/CaseToggleButton'
 import RepeatButton from '@/components/RepeatButton'
 
 interface ListenModeProps {
@@ -74,7 +74,7 @@ export default function ListenMode({ onFeedback, onPlayWord }: ListenModeProps) 
     <div className="flex flex-col items-center justify-center w-full">
       <div className="flex items-center gap-4 mb-8">
         <RepeatButton />
-        <CaseToggle />
+        <CaseToggleButton />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-xl">
         {options.map((word, index) => {

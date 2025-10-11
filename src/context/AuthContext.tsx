@@ -68,7 +68,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     setError(message)
-    throw new Error(message)
   }
 
   const signInWithGoogle = async () => {

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useGame } from '@/context/GameContext'
 import { useGameModeInitialization } from '@/hooks/useGameModeInitialization'
 import { generateLetterOptions, formatWord, formatLetter } from '@/utils/gameUtils'
-import CaseToggle from '@/components/CaseToggle'
+import CaseToggleButton from '@/components/CaseToggleButton'
 import RepeatButton from '@/components/RepeatButton'
 
 interface WriteModeProps {
@@ -96,7 +96,7 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
     <div className="flex flex-col items-center justify-center w-full">
       <div className="flex items-center gap-4 mb-8">
         <RepeatButton />
-        <CaseToggle />
+        <CaseToggleButton />
       </div>
       <div className="flex flex-col items-center w-full max-w-xl">
         <div className="p-8 bg-gray-800 rounded-3xl w-full text-center mb-8 shadow-md">

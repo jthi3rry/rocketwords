@@ -261,7 +261,7 @@ src/
 │   │   ├── ReadMode.tsx
 │   │   └── WriteMode.tsx
 │   ├── AccountManagementScreen.tsx # Firebase auth UI
-│   ├── CaseToggle.tsx     # Case toggle component
+│   ├── CaseToggleButton.tsx     # Case toggle component
 │   ├── Feedback.tsx       # Feedback display component
 │   ├── GameContainer.tsx  # Main game container
 │   ├── GameScreen.tsx     # Game screen wrapper
@@ -399,7 +399,7 @@ The test suite covers:
 - `useSpeechSynthesis` - Speech API integration and voice selection
 
 #### **React Components**
-- **UI Components**: CaseToggle, RepeatButton, Feedback
+- **UI Components**: CaseToggleButton, RepeatButton, Feedback
 - **Game Mode Components**: WriteMode with comprehensive interaction testing
 - **Screen Components**: ParentModeScreen with CRUD operations testing
 
@@ -424,7 +424,7 @@ src/__tests__/
 ├── components/               # Component tests
 │   ├── game/
 │   │   └── WriteMode.test.tsx
-│   ├── CaseToggle.test.tsx
+│   ├── CaseToggleButton.test.tsx
 │   ├── Feedback.test.tsx
 │   ├── RepeatButton.test.tsx
 │   └── ParentModeScreen.test.tsx
@@ -484,11 +484,11 @@ describe('useGameFeedback', () => {
 ```typescript
 import { render, screen, fireEvent } from '@testing-library/react'
 import { renderWithGameContext } from '../testUtils'
-import CaseToggle from '@/components/CaseToggle'
+import CaseToggleButton from '@/components/CaseToggleButton'
 
-describe('CaseToggle', () => {
+describe('CaseToggleButton', () => {
   it('should toggle case when clicked', () => {
-    renderWithGameContext(<CaseToggle />)
+    renderWithGameContext(<CaseToggleButton />)
     
     const button = screen.getByRole('button')
     fireEvent.click(button)
