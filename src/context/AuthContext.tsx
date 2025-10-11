@@ -12,7 +12,7 @@ import {
   deleteUser,
 } from 'firebase/auth'
 import { doc, deleteDoc } from 'firebase/firestore'
-import { auth, googleProvider, db } from '@/config/firebase'
+import { getFirebaseAuth, getGoogleProvider, getFirebaseDb } from '@/config/firebase'
 
 interface AuthContextType {
   user: User | null
@@ -36,7 +36,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Listen for auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const firebaseAuth = getFirebaseAuth()
+    if (!firebaseAuth) {
+      setLoading(false)
+      return
+    }
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       setUser(user)
       setLoading(false)
     })
@@ -74,7 +80,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setError(null)
       setLoading(true)
-      await signInWithPopup(auth, googleProvider)
+      
+      const firebaseAuth = getFirebaseAuth()
+      const googleAuthProvider = getGoogleProvider()
+      
+      if (!firebaseAuth || !googleAuthProvider) {
+        throw new Error('Firebase not initialized')
+      }
+      
+      await signInWithPopup(firebaseAuth, googleAuthProvider)
     } catch (error: any) {
       handleError(error)
     } finally {
@@ -86,7 +100,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setError(null)
       setLoading(true)
-      await signInWithEmailAndPassword(auth, email, password)
+      
+      const firebaseAuth = getFirebaseAuth()
+      if (!firebaseAuth) {
+        throw new Error('Firebase not initialized')
+      }
+      
+      await signInWithEmailAndPassword(firebaseAuth, email, password)
     } catch (error: any) {
       handleError(error)
     } finally {
@@ -98,7 +118,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setError(null)
       setLoading(true)
-      await createUserWithEmailAndPassword(auth, email, password)
+      
+      const firebaseAuth = getFirebaseAuth()
+      if (!firebaseAuth) {
+        throw new Error('Firebase not initialized')
+      }
+      
+      await createUserWithEmailAndPassword(firebaseAuth, email, password)
     } catch (error: any) {
       handleError(error)
     } finally {
@@ -109,7 +135,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const resetPassword = async (email: string) => {
     try {
       setError(null)
-      await sendPasswordResetEmail(auth, email)
+      
+      const firebaseAuth = getFirebaseAuth()
+      if (!firebaseAuth) {
+        throw new Error('Firebase not initialized')
+      }
+      
+      await sendPasswordResetEmail(firebaseAuth, email)
     } catch (error: any) {
       handleError(error)
     }
@@ -118,7 +150,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       setError(null)
-      await firebaseSignOut(auth)
+      
+      const firebaseAuth = getFirebaseAuth()
+      if (!firebaseAuth) {
+        throw new Error('Firebase not initialized')
+      }
+      
+      await firebaseSignOut(firebaseAuth)
     } catch (error: any) {
       handleError(error)
     }
@@ -128,8 +166,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setError(null)
       if (user) {
+        const firebaseDb = getFirebaseDb()
+        const firebaseAuth = getFirebaseAuth()
+        
+        if (!firebaseDb || !firebaseAuth) {
+          throw new Error('Firebase not initialized')
+        }
+        
         // Delete user's Firestore data first
-        const userDocRef = doc(db, 'users', user.uid, 'gameData', 'levels')
+        const userDocRef = doc(firebaseDb, 'users', user.uid, 'gameData', 'levels')
         await deleteDoc(userDocRef)
         
         // Then delete the Firebase Auth account

@@ -50,6 +50,11 @@ jest.mock('@/config/firebase', () => ({
   googleProvider: {
     setCustomParameters: jest.fn(),
   },
+  getFirebaseAuth: jest.fn(() => ({})),
+  getFirebaseDb: jest.fn(() => ({})),
+  getGoogleProvider: jest.fn(() => ({
+    setCustomParameters: jest.fn(),
+  })),
 }))
 
 // Note: AuthContext is not mocked globally - individual tests can mock it if needed

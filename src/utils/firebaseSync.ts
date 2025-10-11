@@ -6,7 +6,7 @@ import {
   Timestamp,
   Unsubscribe,
 } from 'firebase/firestore'
-import { db } from '@/config/firebase'
+import { getFirebaseDb } from '@/config/firebase'
 
 interface Level {
   name: string
@@ -34,7 +34,12 @@ export const syncToFirestore = async (
   levels: Record<string, Level>
 ): Promise<void> => {
   try {
-    const userDocRef = doc(db, 'users', userId, 'gameData', 'levels')
+    const firebaseDb = getFirebaseDb()
+    if (!firebaseDb) {
+      throw new Error('Firebase not initialized')
+    }
+    
+    const userDocRef = doc(firebaseDb, 'users', userId, 'gameData', 'levels')
     const data: FirestoreData = {
       levels,
       lastModified: Timestamp.now(),
@@ -53,7 +58,12 @@ export const syncFromFirestore = async (
   userId: string
 ): Promise<Record<string, Level> | null> => {
   try {
-    const userDocRef = doc(db, 'users', userId, 'gameData', 'levels')
+    const firebaseDb = getFirebaseDb()
+    if (!firebaseDb) {
+      throw new Error('Firebase not initialized')
+    }
+    
+    const userDocRef = doc(firebaseDb, 'users', userId, 'gameData', 'levels')
     const docSnap = await getDoc(userDocRef)
 
     if (docSnap.exists()) {
@@ -77,7 +87,12 @@ export const mergeData = async (
   localLastModified: number
 ): Promise<{ levels: Record<string, Level>; lastModified: number }> => {
   try {
-    const userDocRef = doc(db, 'users', userId, 'gameData', 'levels')
+    const firebaseDb = getFirebaseDb()
+    if (!firebaseDb) {
+      throw new Error('Firebase not initialized')
+    }
+    
+    const userDocRef = doc(firebaseDb, 'users', userId, 'gameData', 'levels')
     const docSnap = await getDoc(userDocRef)
 
     if (!docSnap.exists()) {
@@ -124,7 +139,14 @@ export const enableAutoSync = (
     syncUnsubscribe()
   }
 
-  const userDocRef = doc(db, 'users', userId, 'gameData', 'levels')
+  const firebaseDb = getFirebaseDb()
+  if (!firebaseDb) {
+    const error = new Error('Firebase not initialized')
+    onError(error)
+    return () => {} // Return empty unsubscribe function
+  }
+
+  const userDocRef = doc(firebaseDb, 'users', userId, 'gameData', 'levels')
 
   syncUnsubscribe = onSnapshot(
     userDocRef,
