@@ -14,6 +14,7 @@ A kid-friendly educational web application for learning words through interactiv
   - Create multiple difficulty levels
   - Secure parent login with math challenges
   - Manage word lists across different levels
+  - **Optional Cloud Sync**: Sign in with Google or Email/Password to sync levels across devices
 
 - **Interactive Features:**
   - Case toggle (uppercase/lowercase) for all text display
@@ -28,6 +29,73 @@ A kid-friendly educational web application for learning words through interactiv
   - Tailwind CSS for styling
   - Responsive design for all devices
   - Speech Synthesis API for audio features
+  - Firebase Authentication & Firestore (optional)
+
+## Architecture
+
+### Offline-First Design
+
+RocketWords is designed as an **offline-first application**. All functionality works without an internet connection or Firebase setup:
+
+- **localStorage** is the primary data store
+- Custom levels and progress are saved locally
+- The app functions completely independently
+- No backend required for core functionality
+
+### Optional Cloud Sync
+
+Firebase integration is **completely optional** and provides cloud synchronization:
+
+- **Authentication**: Google Sign-In or Email/Password
+- **Data Sync**: Custom levels automatically sync across devices
+- **Conflict Resolution**: Last-write-wins strategy with timestamps
+- **Real-time Updates**: Changes sync instantly when online
+- **Seamless Integration**: Works transparently with localStorage
+
+#### How It Works
+
+1. **Without Authentication**: All data stays in localStorage, app works 100% offline
+2. **After Sign-In**: 
+   - Local data merges with cloud data (last-write-wins)
+   - Changes sync to Firestore automatically (debounced)
+   - Data accessible from any device with same account
+3. **On Sign-Out**: Local data remains intact, sync stops
+
+This architecture ensures the app is always functional while offering optional cloud features for multi-device use.
+
+### Environment Detection
+
+The app **automatically switches** between environments:
+
+| Environment | Firebase Connection | Use Case |
+|------------|---------------------|----------|
+| **localhost** | Firebase Emulators (if running) OR Production Firebase | Development & Testing |
+| **Deployed** | Production Firebase | Live users |
+
+**No code changes needed** - the app detects `window.location.hostname` and connects accordingly!
+
+#### Quick Reference
+
+**Development workflow:**
+```bash
+# Terminal 1: Start Firebase Emulators (optional)
+npm run emulators
+
+# Terminal 2: Start Next.js dev server
+npm run dev
+
+# Browser: localhost:3000 → Auto-connects to emulators
+# Emulator UI: localhost:4000 → View/manage test data
+```
+
+**Production deployment:**
+```bash
+# Build the app (embeds Firebase config from .env.local or GitHub Secrets)
+npm run build
+
+# Deploy to GitHub Pages (GitHub Actions does this automatically)
+# The app automatically uses production Firebase
+```
 
 ## Getting Started
 
@@ -43,12 +111,131 @@ A kid-friendly educational web application for learning words through interactiv
 npm install
 ```
 
-2. Run the development server:
+2. **Optional: Firebase Setup for Cloud Sync**
+
+If you want to enable cloud synchronization of custom levels across devices, you'll need to set up Firebase:
+
+   a. Create a Firebase project at [https://console.firebase.google.com/](https://console.firebase.google.com/)
+   
+   b. Enable authentication methods:
+      - Go to Authentication → Sign-in method
+      - Enable "Google" provider
+      - Enable "Email/Password" provider
+   
+   c. Create a Firestore database:
+      - Go to Firestore Database → Create Database
+      - Start in production mode
+      - Choose your region
+   
+   d. Deploy security rules:
+      ```bash
+      # Login to Firebase (one-time)
+      npx firebase login
+      
+      # Initialize Firebase (select Firestore only)
+      npx firebase init firestore
+      
+      # Deploy the security rules
+      npx firebase deploy --only firestore:rules
+      ```
+      
+      **Note:** `firebase-tools` is included as a dev dependency, so you can use `npx firebase` instead of installing globally.
+   
+   e. Get your Firebase configuration:
+      - Go to Project Settings → General
+      - Scroll down to "Your apps" section
+      - Click on the web app icon (</>) or "Add app" if needed
+      - Copy the config object
+   
+   f. Create `.env.local` file in the project root:
+      ```bash
+      cp env.example .env.local
+      ```
+   
+   g. Edit `.env.local` and add your Firebase configuration:
+      ```
+      NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+      NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef123456
+      ```
+
+   **Note:** The app works fully without Firebase. Cloud sync is optional and only needed if you want to access custom levels from multiple devices.
+
+### Firebase Development vs Production
+
+The app automatically detects the environment and connects to the appropriate Firebase instance:
+
+#### Development (localhost)
+
+**Option 1: Use Firebase Emulators (Recommended)**
+
+Firebase Emulators let you develop locally without touching production data or incurring costs:
+
+**Note:** `firebase-tools` is already included as a dev dependency - no global installation needed!
+
+1. **Login to Firebase** (one-time):
+   ```bash
+   npx firebase login
+   ```
+
+2. **Initialize emulators** (one-time setup):
+   ```bash
+   npx firebase init emulators
+   ```
+   - Select: ✅ Authentication Emulator, ✅ Firestore Emulator
+   - Use default ports (Auth: 9099, Firestore: 8080)
+
+3. **Start emulators** (Terminal 1):
+   ```bash
+   npm run emulators
+   ```
+   - Emulator UI available at: `http://localhost:4000`
+   - Browse/edit test data in a visual interface
+   - Or run: `npx firebase emulators:start`
+
+4. **Start your app** (Terminal 2):
+   ```bash
+   npm run dev
+   ```
+
+The app will **automatically detect** you're on localhost and connect to emulators. You'll see in the browser console:
+```
+🔧 Using Firebase Emulators (Auth: 9099, Firestore: 8080)
+```
+
+**Benefits of Emulators:**
+- ✅ **Free** - No Firebase costs during development
+- ✅ **Fast** - No network latency
+- ✅ **Isolated** - Test data doesn't touch production
+- ✅ **Resettable** - Clear data anytime
+- ✅ **Offline** - Works without internet
+
+**Option 2: Use Production Firebase**
+
+If you prefer to test with production Firebase during development, simply:
+1. Don't start the emulators
+2. Run `npm run dev`
+3. The app will connect to your production Firebase instance
+
+#### Production (Deployed)
+
+When deployed to GitHub Pages or any non-localhost domain:
+- ✅ **Automatically uses production Firebase**
+- ✅ Environment variables from build-time (GitHub Secrets)
+- ✅ No code changes needed
+- ✅ Real authentication and data sync
+
+**The switch is automatic** - just deploy and it works!
+
+3. Run the development server:
 ```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Building for Production
 
@@ -56,6 +243,8 @@ npm run dev
 npm run build
 npm start
 ```
+
+For GitHub Pages deployment, the build output will be in the `out/` directory and can be deployed as static files.
 
 ## Project Structure
 
@@ -71,6 +260,7 @@ src/
 │   │   ├── ListenMode.tsx
 │   │   ├── ReadMode.tsx
 │   │   └── WriteMode.tsx
+│   ├── AccountManagementScreen.tsx # Firebase auth UI
 │   ├── CaseToggle.tsx     # Case toggle component
 │   ├── Feedback.tsx       # Feedback display component
 │   ├── GameContainer.tsx  # Main game container
@@ -80,14 +270,19 @@ src/
 │   ├── ParentLoginScreen.tsx
 │   ├── ParentModeScreen.tsx
 │   ├── RepeatButton.tsx   # Audio repeat button
+│   ├── SyncStatusIndicator.tsx # Cloud sync status badge
 │   └── WelcomeScreen.tsx
+├── config/                # Configuration
+│   └── firebase.ts        # Firebase initialization
 ├── context/               # State management
+│   ├── AuthContext.tsx    # Firebase authentication state
 │   └── GameContext.tsx    # Game state and actions
 ├── hooks/                 # Custom hooks
 │   ├── useGameFeedback.ts # Feedback management
 │   ├── useGameModeInitialization.ts # Game mode setup
 │   └── useSpeechSynthesis.ts # Text-to-speech functionality
 ├── utils/                 # Utility functions
+│   ├── firebaseSync.ts    # Cloud sync utilities
 │   └── gameUtils.ts       # Game logic utilities
 └── __tests__/             # Test files
     ├── utils/             # Utility function tests
@@ -96,6 +291,11 @@ src/
     ├── context/           # Context and state tests
     ├── integration/       # End-to-end flow tests
     └── testUtils.tsx      # Test utilities and helpers
+
+Root files:
+├── firestore.rules        # Firestore security rules
+├── env.example            # Environment variables template
+└── .env.local            # Your Firebase config (create from env.example)
 ```
 
 ## Key Improvements from React Version
@@ -351,7 +551,97 @@ When a pull request is merged to `main`:
 - **Live Site**: Access the deployed application via the GitHub Pages URL
 
 ### GitHub Pages Configuration
+
 The app is configured for GitHub Pages subdirectory deployment at `/rocketwords/`. The build process uses `basePath` and `assetPrefix` to ensure all assets load correctly when deployed to the subdirectory.
+
+#### Setting Environment Variables for GitHub Pages
+
+Since GitHub Pages serves static files, Firebase environment variables are embedded into the JavaScript bundle **at build time**. You have two options:
+
+**Option 1: Using GitHub Secrets (Recommended for CI/CD)**
+
+1. **Add Firebase config as GitHub Secrets:**
+   - Go to your repository → Settings → Secrets and variables → Actions
+   - Click "New repository secret" and add each value:
+     - `FIREBASE_API_KEY` → your Firebase API key
+     - `FIREBASE_AUTH_DOMAIN` → your-project.firebaseapp.com
+     - `FIREBASE_PROJECT_ID` → your-project-id
+     - `FIREBASE_STORAGE_BUCKET` → your-project.appspot.com
+     - `FIREBASE_MESSAGING_SENDER_ID` → 123456789
+     - `FIREBASE_APP_ID` → 1:123456789:web:abcdef
+
+2. **Update your GitHub Actions workflow** (`.github/workflows/deploy.yml`):
+   ```yaml
+   name: Deploy to GitHub Pages
+   
+   on:
+     push:
+       branches: [ main ]
+     pull_request:
+       branches: [ main ]
+   
+   jobs:
+     build-and-deploy:
+       runs-on: ubuntu-latest
+       
+       steps:
+         - uses: actions/checkout@v3
+         
+         - name: Setup Node.js
+           uses: actions/setup-node@v3
+           with:
+             node-version: '18'
+             cache: 'npm'
+         
+         - name: Install dependencies
+           run: npm ci
+         
+         - name: Run tests
+           run: npm test
+         
+         - name: Build
+           env:
+             NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+             NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+             NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+             NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+             NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+             NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+           run: npm run build
+         
+         - name: Deploy to GitHub Pages
+           if: github.ref == 'refs/heads/main'
+           uses: peaceiris/actions-gh-pages@v3
+           with:
+             github_token: ${{ secrets.GITHUB_TOKEN }}
+             publish_dir: ./out
+   ```
+
+**Option 2: Build Locally and Push**
+
+If you're building locally before deploying:
+
+1. Create `.env.local` with your Firebase config (already gitignored)
+2. Run `npm run build` - this embeds the environment variables
+3. Deploy the `out/` directory to GitHub Pages
+
+**Important Security Note:**
+
+Firebase config values (API keys, project IDs) are **designed to be public** and safe to include in client-side code. They will be visible in your deployed JavaScript bundle. Security is enforced through:
+- **Firestore Security Rules** - Only authenticated users can access their own data
+- **Firebase Authentication** - Users must sign in to sync data
+- **Domain restrictions** - Configure allowed domains in Firebase Console
+
+The `firestore.rules` file ensures users can only read/write their own data:
+```
+match /users/{userId}/{document=**} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+```
+
+**Without Firebase Setup:**
+
+The app works perfectly fine without any Firebase configuration. Users will simply use localStorage only (no cloud sync).
 
 ## License
 

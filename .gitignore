@@ -46,4 +46,34 @@ pids
 # OS generated files
 Thumbs.db
 
+# Firebase
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+.firebaserc.local
+firebase-export-*
+firebase-import-*
 
+# Firebase Emulator data
+firebase-emulators/
+firebase-export-*/
+firebase-import-*/
+
+# Firebase Functions (if added later)
+functions/node_modules/
+functions/.runtimeconfig.json
+functions/lib/
+functions/*.log
+
+# Firebase Hosting (if used)
+public/_redirects
+
+# TypeScript
+*.tsbuildinfo
+
+# Vercel (if used)
+.vercel
+
+# Turbo (if used)
+.turbo

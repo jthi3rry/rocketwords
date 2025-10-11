@@ -1,6 +1,7 @@
 'use client'
 
 import { useGame } from '@/context/GameContext'
+import { getSortedLevelKeys } from '@/utils/gameUtils'
 
 export default function LevelScreen() {
   const { state, dispatch } = useGame()
@@ -42,7 +43,7 @@ export default function LevelScreen() {
         Choose your adventure!
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-xl mb-8">
-        {Object.keys(state.levels).map(key => (
+        {getSortedLevelKeys(state.levels).map(key => (
           <button
             key={key}
             onClick={() => handleLevelSelect(key)}
