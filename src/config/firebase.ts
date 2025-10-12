@@ -15,21 +15,7 @@ const requiredEnvVars = {
 }
 
 // Validate environment variables (only in browser environment)
-<<<<<<< Updated upstream
 const missingEnvVars = Object.entries(requiredEnvVars)
-=======
-const requiredEnvVarsForValidation = {
-  NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-}
-
-const missingEnvVars = Object.entries(requiredEnvVarsForValidation)
->>>>>>> Stashed changes
   .filter(([key, value]) => !value)
   .map(([key]) => key)
 
@@ -144,15 +130,11 @@ export const getGoogleProvider = (): GoogleAuthProvider | null => {
   return firebaseServices.googleProvider || initializeFirebase().googleProvider
 }
 
-<<<<<<< Updated upstream
-=======
 export const getFirebaseAnalytics = (): Analytics | null => {
   if (typeof window === 'undefined') return null
   return firebaseServices.analytics || initializeFirebase().analytics
 }
 
-
->>>>>>> Stashed changes
 // Legacy exports for backward compatibility (will be null in SSR/SSG)
 // Note: These exports are deprecated. Use getFirebaseAuth(), getFirebaseDb(), getGoogleProvider(), getFirebaseAnalytics() instead
 export const auth = firebaseServices.auth
