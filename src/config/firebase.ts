@@ -3,39 +3,37 @@ import { getAuth, Auth as FirebaseAuth, GoogleAuthProvider, connectAuthEmulator 
 import { getFirestore, Firestore as FirebaseFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 import { getAnalytics, Analytics } from 'firebase/analytics'
 
-// Environment variable validation
-const requiredEnvVars = {
-  NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-}
+// Utility functions
+const isBrowser = () => typeof window !== 'undefined'
 
-// Validate environment variables (only in browser environment)
-const missingEnvVars = Object.entries(requiredEnvVars)
-  .filter(([key, value]) => !value)
-  .map(([key]) => key)
-
-// Only throw error in browser environment, not during build/SSR
-if (typeof window !== 'undefined' && missingEnvVars.length > 0) {
-  throw new Error(
-    `Missing required Firebase environment variables: ${missingEnvVars.join(', ')}. ` +
-    'Please check your .env.local file and ensure all Firebase configuration values are set.'
-  )
+const isEmulatorMode = (): boolean => {
+  if (!isBrowser()) return false
+  return window.location.hostname === 'localhost' && process.env.NODE_ENV === 'development'
 }
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: requiredEnvVars.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: requiredEnvVars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: requiredEnvVars.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: requiredEnvVars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: requiredEnvVars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: requiredEnvVars.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: requiredEnvVars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+}
+
+// Validate environment variables (only in browser environment)
+if (isBrowser()) {
+  const missingVars = Object.entries(firebaseConfig)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key)
+  
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required Firebase environment variables: ${missingVars.join(', ')}. ` +
+      'Please check your .env.local file and ensure all Firebase configuration values are set.'
+    )
+  }
 }
 
 // Initialize Firebase app (singleton pattern)
@@ -47,8 +45,7 @@ let firebaseAnalytics: Analytics | null = null
 
 // Initialize Firebase services
 const initializeFirebase = () => {
-  if (typeof window === 'undefined') {
-    // Return null values for SSR/SSG contexts
+  if (!isBrowser()) {
     return { app: null, auth: null, db: null, googleProvider: null, analytics: null }
   }
 
@@ -59,49 +56,20 @@ const initializeFirebase = () => {
 
   try {
     // Initialize Firebase app
-    if (!getApps().length) {
-      app = initializeApp(firebaseConfig)
-    } else {
-      app = getApps()[0]
-    }
+    app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig)
 
     // Initialize services
     firebaseAuth = getAuth(app)
     firebaseDb = getFirestore(app)
     firebaseGoogleProvider = new GoogleAuthProvider()
-    
-    // Initialize Analytics (browser only)
-    try {
-      firebaseAnalytics = getAnalytics(app)
-    } catch (error) {
-      console.warn('⚠️ Firebase Analytics initialization failed:', error)
-      firebaseAnalytics = null
-    }
-    
-    // Customize Google provider settings
-    firebaseGoogleProvider.setCustomParameters({
-      prompt: 'select_account'
-    })
+    firebaseGoogleProvider.setCustomParameters({ prompt: 'select_account' })
 
-    // Connect to Firebase Emulators in development
-    const isLocalhost = window.location.hostname === 'localhost'
-    const isDevelopment = process.env.NODE_ENV === 'development'
-    
-    if (isLocalhost && isDevelopment) {
-      try {
-        // Try to connect to emulators (will fail if already connected)
-        connectAuthEmulator(firebaseAuth, 'http://localhost:9099', { disableWarnings: true })
-        console.log('✅ Firebase Auth Emulator connected')
-        
-        connectFirestoreEmulator(firebaseDb, 'localhost', 8080)
-        console.log('✅ Firebase Firestore Emulator connected')
-      } catch (error: any) {
-        // Only log error if it's not about already being connected
-        if (!error.message?.includes('already been called') && !error.message?.includes('already connected')) {
-          console.warn('⚠️ Firebase Emulators not available. Using production Firebase.')
-          console.warn('To use emulators, run: firebase emulators:start')
-        }
-      }
+    // Handle emulator vs production mode
+    if (isEmulatorMode()) {
+      connectToEmulators()
+      firebaseAnalytics = null // Skip analytics in emulator mode
+    } else {
+      initializeAnalytics(app)
     }
 
     return { app, auth: firebaseAuth, db: firebaseDb, googleProvider: firebaseGoogleProvider, analytics: firebaseAnalytics }
@@ -111,29 +79,51 @@ const initializeFirebase = () => {
   }
 }
 
+// Connect to Firebase emulators
+const connectToEmulators = () => {
+  try {
+    connectAuthEmulator(firebaseAuth!, 'http://localhost:9099', { disableWarnings: true })
+    connectFirestoreEmulator(firebaseDb!, 'localhost', 8080)
+    console.log('✅ Firebase Emulators connected (Auth: 9099, Firestore: 8080)')
+    console.log('ℹ️ Skipping Analytics initialization in emulator mode')
+  } catch (error: any) {
+    if (!error.message?.includes('already been called') && !error.message?.includes('already connected')) {
+      console.warn('⚠️ Firebase Emulators not available. Using production Firebase.')
+      console.warn('To use emulators, run: firebase emulators:start')
+    }
+  }
+}
+
+// Initialize Analytics in production mode
+const initializeAnalytics = (app: FirebaseApp) => {
+  try {
+    firebaseAnalytics = getAnalytics(app)
+    console.log('✅ Firebase Analytics initialized')
+  } catch (error) {
+    console.warn('⚠️ Firebase Analytics initialization failed:', error)
+    firebaseAnalytics = null
+  }
+}
+
 // Initialize Firebase services
 const firebaseServices = initializeFirebase()
 
+// Generic getter function to reduce repetition
+const createServiceGetter = <T>(serviceKey: keyof typeof firebaseServices): (() => T | null) => {
+  return (): T | null => {
+    if (!isBrowser()) return null
+    return (firebaseServices[serviceKey] || initializeFirebase()[serviceKey]) as T | null
+  }
+}
+
 // Export services with proper SSR/SSG handling
-export const getFirebaseAuth = (): FirebaseAuth | null => {
-  if (typeof window === 'undefined') return null
-  return firebaseServices.auth || initializeFirebase().auth
-}
+export const getFirebaseAuth = createServiceGetter<FirebaseAuth>('auth')
+export const getFirebaseDb = createServiceGetter<FirebaseFirestore>('db')
+export const getGoogleProvider = createServiceGetter<GoogleAuthProvider>('googleProvider')
+export const getFirebaseAnalytics = createServiceGetter<Analytics>('analytics')
 
-export const getFirebaseDb = (): FirebaseFirestore | null => {
-  if (typeof window === 'undefined') return null
-  return firebaseServices.db || initializeFirebase().db
-}
-
-export const getGoogleProvider = (): GoogleAuthProvider | null => {
-  if (typeof window === 'undefined') return null
-  return firebaseServices.googleProvider || initializeFirebase().googleProvider
-}
-
-export const getFirebaseAnalytics = (): Analytics | null => {
-  if (typeof window === 'undefined') return null
-  return firebaseServices.analytics || initializeFirebase().analytics
-}
+// Export utility function
+export { isEmulatorMode }
 
 // Legacy exports for backward compatibility (will be null in SSR/SSG)
 // Note: These exports are deprecated. Use getFirebaseAuth(), getFirebaseDb(), getGoogleProvider(), getFirebaseAnalytics() instead

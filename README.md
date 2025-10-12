@@ -204,6 +204,7 @@ Firebase Emulators let you develop locally without touching production data or i
 The app will **automatically detect** you're on localhost and connect to emulators. You'll see in the browser console:
 ```
 🔧 Using Firebase Emulators (Auth: 9099, Firestore: 8080)
+ℹ️ Skipping Analytics initialization in emulator mode
 ```
 
 **Benefits of Emulators:**
@@ -212,6 +213,7 @@ The app will **automatically detect** you're on localhost and connect to emulato
 - ✅ **Isolated** - Test data doesn't touch production
 - ✅ **Resettable** - Clear data anytime
 - ✅ **Offline** - Works without internet
+- ✅ **Analytics Disabled** - No analytics events sent during development
 
 **Option 2: Use Production Firebase**
 
