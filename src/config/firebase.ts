@@ -1,6 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app'
 import { getAuth, Auth as FirebaseAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth'
 import { getFirestore, Firestore as FirebaseFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getAnalytics, Analytics } from 'firebase/analytics'
 
 // Environment variable validation
 const requiredEnvVars = {
@@ -10,10 +11,25 @@ const requiredEnvVars = {
   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
 // Validate environment variables (only in browser environment)
+<<<<<<< Updated upstream
 const missingEnvVars = Object.entries(requiredEnvVars)
+=======
+const requiredEnvVarsForValidation = {
+  NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+}
+
+const missingEnvVars = Object.entries(requiredEnvVarsForValidation)
+>>>>>>> Stashed changes
   .filter(([key, value]) => !value)
   .map(([key]) => key)
 
@@ -33,6 +49,7 @@ const firebaseConfig = {
   storageBucket: requiredEnvVars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: requiredEnvVars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: requiredEnvVars.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: requiredEnvVars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
 // Initialize Firebase app (singleton pattern)
@@ -40,17 +57,18 @@ let app: FirebaseApp | null = null
 let firebaseAuth: FirebaseAuth | null = null
 let firebaseDb: FirebaseFirestore | null = null
 let firebaseGoogleProvider: GoogleAuthProvider | null = null
+let firebaseAnalytics: Analytics | null = null
 
 // Initialize Firebase services
 const initializeFirebase = () => {
   if (typeof window === 'undefined') {
     // Return null values for SSR/SSG contexts
-    return { app: null, auth: null, db: null, googleProvider: null }
+    return { app: null, auth: null, db: null, googleProvider: null, analytics: null }
   }
 
   // Only initialize once
   if (app) {
-    return { app, auth: firebaseAuth, db: firebaseDb, googleProvider: firebaseGoogleProvider }
+    return { app, auth: firebaseAuth, db: firebaseDb, googleProvider: firebaseGoogleProvider, analytics: firebaseAnalytics }
   }
 
   try {
@@ -65,6 +83,14 @@ const initializeFirebase = () => {
     firebaseAuth = getAuth(app)
     firebaseDb = getFirestore(app)
     firebaseGoogleProvider = new GoogleAuthProvider()
+    
+    // Initialize Analytics (browser only)
+    try {
+      firebaseAnalytics = getAnalytics(app)
+    } catch (error) {
+      console.warn('⚠️ Firebase Analytics initialization failed:', error)
+      firebaseAnalytics = null
+    }
     
     // Customize Google provider settings
     firebaseGoogleProvider.setCustomParameters({
@@ -92,7 +118,7 @@ const initializeFirebase = () => {
       }
     }
 
-    return { app, auth: firebaseAuth, db: firebaseDb, googleProvider: firebaseGoogleProvider }
+    return { app, auth: firebaseAuth, db: firebaseDb, googleProvider: firebaseGoogleProvider, analytics: firebaseAnalytics }
   } catch (error) {
     console.error('❌ Firebase initialization failed:', error)
     throw error
@@ -118,9 +144,19 @@ export const getGoogleProvider = (): GoogleAuthProvider | null => {
   return firebaseServices.googleProvider || initializeFirebase().googleProvider
 }
 
+<<<<<<< Updated upstream
+=======
+export const getFirebaseAnalytics = (): Analytics | null => {
+  if (typeof window === 'undefined') return null
+  return firebaseServices.analytics || initializeFirebase().analytics
+}
+
+
+>>>>>>> Stashed changes
 // Legacy exports for backward compatibility (will be null in SSR/SSG)
-// Note: These exports are deprecated. Use getFirebaseAuth(), getFirebaseDb(), getGoogleProvider() instead
+// Note: These exports are deprecated. Use getFirebaseAuth(), getFirebaseDb(), getGoogleProvider(), getFirebaseAnalytics() instead
 export const auth = firebaseServices.auth
 export const db = firebaseServices.db  
 export const googleProvider = firebaseServices.googleProvider
+export const analytics = firebaseServices.analytics
 
