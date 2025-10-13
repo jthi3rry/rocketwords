@@ -45,17 +45,19 @@ describe('firebaseSync', () => {
         level1: { name: 'Level 1', words: ['cat', 'dog'] },
         level2: { name: 'Level 2', words: ['bird', 'fish'] }
       }
+      const levelOrder = ['level1', 'level2']
 
       mockSetDoc.mockResolvedValue(undefined)
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
-      await syncToFirestore(userId, levels)
+      await syncToFirestore(userId, levels, levelOrder)
 
       expect(mockDoc).toHaveBeenCalledWith(expect.anything(), 'users', userId, 'gameData', 'levels')
       expect(mockSetDoc).toHaveBeenCalledWith(
         { path: `users/${userId}/gameData/levels` },
         expect.objectContaining({
           levels,
+          levelOrder,
           lastModified: expect.any(Object)
         })
       )
@@ -64,18 +66,20 @@ describe('firebaseSync', () => {
     it('should include timestamp in uploaded data', async () => {
       const userId = 'test-user-123'
       const levels = { level1: { name: 'Level 1', words: ['cat'] } }
+      const levelOrder = ['level1']
       const mockTimestampValue = createMockTimestamp(1234567890)
 
       mockTimestamp.now.mockReturnValue(mockTimestampValue)
       mockSetDoc.mockResolvedValue(undefined)
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
-      await syncToFirestore(userId, levels)
+      await syncToFirestore(userId, levels, levelOrder)
 
       expect(mockSetDoc).toHaveBeenCalledWith(
         { path: `users/${userId}/gameData/levels` },
         {
           levels,
+          levelOrder,
           lastModified: mockTimestampValue
         }
       )
@@ -84,23 +88,25 @@ describe('firebaseSync', () => {
     it('should handle network errors', async () => {
       const userId = 'test-user-123'
       const levels = { level1: { name: 'Level 1', words: ['cat'] } }
+      const levelOrder = ['level1']
       const error = createMockFirebaseError(FirebaseErrorCodes.NETWORK_REQUEST_FAILED)
 
       mockSetDoc.mockRejectedValue(error)
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
-      await expect(syncToFirestore(userId, levels)).rejects.toThrow('Firebase error: auth/network-request-failed')
+      await expect(syncToFirestore(userId, levels, levelOrder)).rejects.toThrow('Firebase error: auth/network-request-failed')
     })
 
     it('should handle permission errors', async () => {
       const userId = 'test-user-123'
       const levels = { level1: { name: 'Level 1', words: ['cat'] } }
+      const levelOrder = ['level1']
       const error = createMockFirebaseError(FirebaseErrorCodes.PERMISSION_DENIED)
 
       mockSetDoc.mockRejectedValue(error)
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
-      await expect(syncToFirestore(userId, levels)).rejects.toThrow('Firebase error: auth/permission-denied')
+      await expect(syncToFirestore(userId, levels, levelOrder)).rejects.toThrow('Firebase error: auth/permission-denied')
     })
   })
 
@@ -180,11 +186,12 @@ describe('firebaseSync', () => {
       mockSetDoc.mockResolvedValue(undefined)
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
-      const result = await mergeData(userId, localLevels, localLastModified)
+      const result = await mergeData(userId, localLevels, localLevelOrder, localLastModified)
 
       expect(mockSetDoc).toHaveBeenCalled()
       expect(result).toEqual({
         levels: localLevels,
+        levelOrder: localLevelOrder,
         lastModified: localLastModified
       })
     })
@@ -194,6 +201,7 @@ describe('firebaseSync', () => {
       const localLevels = {
         level1: { name: 'Level 1', words: ['cat', 'dog', 'bird'] }
       }
+      const localLevelOrder = ['level1']
       const localLastModified = 1234567890
       const remoteLastModified = 1234567800 // 90 seconds earlier
 
@@ -201,6 +209,7 @@ describe('firebaseSync', () => {
         exists: () => true,
         data: () => ({
           levels: { level1: { name: 'Level 1', words: ['cat', 'dog'] } },
+          levelOrder: ['level1'],
           lastModified: createMockTimestamp(remoteLastModified)
         })
       }
@@ -209,11 +218,12 @@ describe('firebaseSync', () => {
       mockSetDoc.mockResolvedValue(undefined)
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
-      const result = await mergeData(userId, localLevels, localLastModified)
+      const result = await mergeData(userId, localLevels, localLevelOrder, localLastModified)
 
       expect(mockSetDoc).toHaveBeenCalled()
       expect(result).toEqual({
         levels: localLevels,
+        levelOrder: localLevelOrder,
         lastModified: localLastModified
       })
     })
@@ -223,16 +233,19 @@ describe('firebaseSync', () => {
       const localLevels = {
         level1: { name: 'Level 1', words: ['cat', 'dog'] }
       }
+      const localLevelOrder = ['level1']
       const localLastModified = 1234567800
       const remoteLastModified = 1234567890 // 90 seconds later
       const remoteLevels = {
         level1: { name: 'Level 1', words: ['cat', 'dog', 'bird'] }
       }
+      const remoteLevelOrder = ['level1']
 
       const mockDocSnap = {
         exists: () => true,
         data: () => ({
           levels: remoteLevels,
+          levelOrder: remoteLevelOrder,
           lastModified: createMockTimestamp(remoteLastModified)
         })
       }
@@ -240,11 +253,12 @@ describe('firebaseSync', () => {
       mockGetDoc.mockResolvedValue(mockDocSnap as any)
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
-      const result = await mergeData(userId, localLevels, localLastModified)
+      const result = await mergeData(userId, localLevels, localLevelOrder, localLastModified)
 
       expect(mockSetDoc).not.toHaveBeenCalled()
       expect(result).toEqual({
         levels: remoteLevels,
+        levelOrder: remoteLevelOrder,
         lastModified: remoteLastModified
       })
     })
@@ -254,16 +268,19 @@ describe('firebaseSync', () => {
       const localLevels = {
         level1: { name: 'Level 1', words: ['cat', 'dog'] }
       }
+      const localLevelOrder = ['level1']
       const localLastModified = 1234567890
       const remoteLastModified = 1234567890 // Same timestamp
       const remoteLevels = {
         level1: { name: 'Level 1', words: ['cat', 'dog', 'bird'] }
       }
+      const remoteLevelOrder = ['level1']
 
       const mockDocSnap = {
         exists: () => true,
         data: () => ({
           levels: remoteLevels,
+          levelOrder: remoteLevelOrder,
           lastModified: createMockTimestamp(remoteLastModified)
         })
       }
@@ -271,11 +288,12 @@ describe('firebaseSync', () => {
       mockGetDoc.mockResolvedValue(mockDocSnap as any)
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
-      const result = await mergeData(userId, localLevels, localLastModified)
+      const result = await mergeData(userId, localLevels, localLevelOrder, localLastModified)
 
       expect(mockSetDoc).not.toHaveBeenCalled()
       expect(result).toEqual({
         levels: remoteLevels,
+        levelOrder: remoteLevelOrder,
         lastModified: remoteLastModified
       })
     })
@@ -283,13 +301,14 @@ describe('firebaseSync', () => {
     it('should handle network errors during merge', async () => {
       const userId = 'test-user-123'
       const localLevels = { level1: { name: 'Level 1', words: ['cat'] } }
+      const localLevelOrder = ['level1']
       const localLastModified = 1234567890
       const error = createMockFirebaseError(FirebaseErrorCodes.NETWORK_REQUEST_FAILED)
 
       mockGetDoc.mockRejectedValue(error)
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
-      await expect(mergeData(userId, localLevels, localLastModified)).rejects.toThrow('Firebase error: auth/network-request-failed')
+      await expect(mergeData(userId, localLevels, localLevelOrder, localLastModified)).rejects.toThrow('Firebase error: auth/network-request-failed')
     })
   })
 
@@ -334,7 +353,7 @@ describe('firebaseSync', () => {
       }
       snapshotCallback!(mockDocSnap)
 
-      expect(onUpdate).toHaveBeenCalledWith(mockData.levels, mockData.lastModified.toMillis())
+      expect(onUpdate).toHaveBeenCalledWith(mockData.levels, mockData.levelOrder, mockData.lastModified.toMillis())
     })
 
     it('should not call onUpdate when document does not exist', () => {
@@ -484,6 +503,7 @@ describe('firebaseSync', () => {
         exists: () => true,
         data: () => ({
           levels: null, // Malformed data
+          levelOrder: null,
           lastModified: createMockTimestamp(1234567890)
         })
       }
@@ -499,12 +519,14 @@ describe('firebaseSync', () => {
     it('should handle missing lastModified field', async () => {
       const userId = 'test-user-123'
       const localLevels = { level1: { name: 'Level 1', words: ['cat'] } }
+      const localLevelOrder = ['level1']
       const localLastModified = 1234567890
 
       const mockDocSnap = {
         exists: () => true,
         data: () => ({
           levels: { level1: { name: 'Level 1', words: ['cat', 'dog'] } },
+          levelOrder: ['level1'],
           // Missing lastModified field
         })
       }
@@ -513,11 +535,12 @@ describe('firebaseSync', () => {
       mockDoc.mockReturnValue({ path: `users/${userId}/gameData/levels` } as any)
 
       // Should handle gracefully and use local data
-      const result = await mergeData(userId, localLevels, localLastModified)
+      const result = await mergeData(userId, localLevels, localLevelOrder, localLastModified)
 
       expect(mockSetDoc).toHaveBeenCalled()
       expect(result).toEqual({
         levels: localLevels,
+        levelOrder: localLevelOrder,
         lastModified: localLastModified
       })
     })

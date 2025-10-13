@@ -72,6 +72,9 @@ export const syncFromFirestore = async (
 
     if (docSnap.exists()) {
       const data = docSnap.data() as FirestoreData
+      if (!data.levels) {
+        return null // Handle malformed data
+      }
       return {
         levels: data.levels,
         levelOrder: data.levelOrder || Object.keys(data.levels) // fallback for old data

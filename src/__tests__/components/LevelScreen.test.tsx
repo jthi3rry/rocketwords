@@ -24,17 +24,20 @@ describe('LevelScreen', () => {
     level2: { name: 'Level 2', words: ['fish', 'frog', 'duck'] },
     level3: { name: 'Level 3', words: ['lion', 'tiger', 'bear'] },
   }
+  const mockLevelOrder = ['level1', 'level2', 'level3']
 
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(getSortedLevelKeys as jest.Mock).mockReturnValue(['level1', 'level2', 'level3'])
+    ;(getSortedLevelKeys as jest.Mock).mockReturnValue(mockLevelOrder)
   })
 
   it('should render level screen when currentScreen is level', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -53,7 +56,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'welcome',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -66,7 +70,9 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -80,7 +86,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -111,7 +118,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -142,7 +150,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -162,7 +171,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -198,7 +208,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -222,7 +233,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -284,7 +296,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -308,7 +321,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })

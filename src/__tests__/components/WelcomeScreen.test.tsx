@@ -89,8 +89,8 @@ describe('WelcomeScreen', () => {
     const startButton = screen.getByText('Start 🚀')
     expect(startButton).toHaveClass('btn-game', 'px-6', 'sm:px-8', 'py-3', 'sm:py-4', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'text-white', 'bg-blue-500', 'hover:bg-blue-600', 'transition-colors', 'duration-300')
 
-    const parentModeButton = screen.getByText('⚙️')
-    expect(parentModeButton).toHaveClass('absolute', 'bottom-3', 'left-3', 'sm:bottom-4', 'sm:left-4', 'p-2', 'sm:p-3', 'md:p-4', 'rounded-full', 'text-gray-400', 'bg-gray-700', 'hover:bg-gray-600', 'transition-colors', 'text-xl', 'sm:text-2xl', 'md:text-3xl')
+    const parentModeButton = screen.getByText('⚙️').closest('button')
+    expect(parentModeButton).toHaveClass('absolute', 'bottom-3', 'left-3', 'sm:bottom-4', 'sm:left-4', 'px-3', 'py-2', 'sm:px-4', 'sm:py-3', 'rounded-full', 'text-gray-400', 'bg-gray-700', 'hover:bg-gray-600', 'transition-colors', 'flex', 'items-center', 'gap-2')
   })
 
   it('should render with responsive design classes', () => {
@@ -180,8 +180,8 @@ describe('WelcomeScreen', () => {
     const startButton = screen.getByText('Start 🚀')
     expect(startButton.tagName).toBe('BUTTON')
 
-    const parentModeButton = screen.getByText('⚙️')
-    expect(parentModeButton.tagName).toBe('BUTTON')
+    const parentModeButton = screen.getByText('⚙️').closest('button')
+    expect(parentModeButton?.tagName).toBe('BUTTON')
   })
 
   it('should maintain proper component structure', () => {
@@ -202,7 +202,7 @@ describe('WelcomeScreen', () => {
     const startButton = screen.getByText('Start 🚀')
     expect(startButton).toBeInTheDocument()
 
-    const parentModeButton = screen.getByText('⚙️')
+    const parentModeButton = screen.getByText('⚙️').closest('button')
     expect(parentModeButton).toBeInTheDocument()
   })
 })

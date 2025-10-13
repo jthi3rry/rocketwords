@@ -423,7 +423,7 @@ describe('ListenMode', () => {
     expect(screen.getByText('🗣️')).toBeInTheDocument()
   })
 
-  it('should handle focus removal when new word loads', () => {
+  it('should handle focus removal when new word loads', async () => {
     renderWithProviders(
       <ListenMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />
     )
@@ -436,7 +436,9 @@ describe('ListenMode', () => {
     
     // The blur functionality is implemented in the component code
     // This test verifies that the callback exists and can be called
-    expect(() => onWordSelected('test')).not.toThrow()
+    await act(async () => {
+      expect(() => onWordSelected('test')).not.toThrow()
+    })
   })
 
   it('should not call blur when no element is focused', async () => {
