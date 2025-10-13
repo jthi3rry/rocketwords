@@ -24,6 +24,7 @@ describe('GameContext', () => {
           level1: { name: 'Level 1', words: ['the', 'am', 'we', 'look', 'i', 'is', 'to', 'here', 'mum', 'in'] },
           level2: { name: 'Level 2', words: ['dad', 'can', 'on', 'see', 'went', 'me', 'up', 'at', 'and', 'go'] }
         },
+        levelOrder: ['level1', 'level2'],
         currentWord: null,
         score: 0,
         mode: null,
@@ -191,6 +192,7 @@ describe('GameContext', () => {
         })
 
         expect(result.current.state.levels.level3).toEqual({ name: 'Level 3', words: ['cat', 'dog'] })
+        expect(result.current.state.levelOrder).toContain('level3')
       })
     })
 

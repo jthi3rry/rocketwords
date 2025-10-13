@@ -120,7 +120,10 @@ describe('firebaseSync', () => {
 
       expect(mockDoc).toHaveBeenCalledWith(expect.anything(), 'users', userId, 'gameData', 'levels')
       expect(mockGetDoc).toHaveBeenCalled()
-      expect(result).toEqual(mockData.levels)
+      expect(result).toEqual({
+        levels: mockData.levels,
+        levelOrder: mockData.levelOrder
+      })
     })
 
     it('should return null when document does not exist', async () => {
@@ -165,6 +168,7 @@ describe('firebaseSync', () => {
       const localLevels = {
         level1: { name: 'Level 1', words: ['cat', 'dog'] }
       }
+      const localLevelOrder = ['level1']
       const localLastModified = 1234567890
 
       const mockDocSnap = {

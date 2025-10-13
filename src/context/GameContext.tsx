@@ -10,6 +10,7 @@ interface Level {
 
 interface GameState {
   levels: Record<string, Level>
+  levelOrder: string[]
   currentWord: string | null
   score: number
   mode: string | null
@@ -38,6 +39,7 @@ type GameAction =
   | { type: 'SET_LEVEL_DATA'; payload: { levelName: string; wordList: string[] } }
   | { type: 'ADD_LEVEL'; payload: { key: string; level: Level } }
   | { type: 'REMOVE_LEVEL'; payload: string }
+  | { type: 'UPDATE_LEVEL_ORDER'; payload: string[] }
   | { type: 'UPDATE_LEVEL_NAME'; payload: { key: string; name: string } }
   | { type: 'ADD_WORD'; payload: { levelKey: string; word: string } }
   | { type: 'REMOVE_WORD'; payload: { levelKey: string; word: string } }
@@ -46,7 +48,7 @@ type GameAction =
   | { type: 'RESET_GAME' }
   | { type: 'SET_USER_ID'; payload: string | null }
   | { type: 'SET_SYNC_STATUS'; payload: SyncStatus }
-  | { type: 'SYNC_LEVELS'; payload: { levels: Record<string, Level>; lastModified: number } }
+  | { type: 'SYNC_LEVELS'; payload: { levels: Record<string, Level>; levelOrder: string[]; lastModified: number } }
   | { type: 'UPDATE_LAST_MODIFIED' }
 
 const GameContext = createContext<GameContextType | undefined>(undefined)
@@ -56,6 +58,7 @@ const initialState: GameState = {
     level1: { name: 'Level 1', words: ['the', 'am', 'we', 'look', 'i', 'is', 'to', 'here', 'mum', 'in'] },
     level2: { name: 'Level 2', words: ['dad', 'can', 'on', 'see', 'went', 'me', 'up', 'at', 'and', 'go'] }
   },
+  levelOrder: ['level1', 'level2'],
   currentWord: null,
   score: 0,
   mode: null,
@@ -101,13 +104,26 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       return {
         ...state,
         levels: { ...state.levels, [action.payload.key]: action.payload.level },
+        levelOrder: [...state.levelOrder, action.payload.key],
         lastModified: Date.now()
       }
     
     case 'REMOVE_LEVEL':
       const newLevels = { ...state.levels }
       delete newLevels[action.payload]
-      return { ...state, levels: newLevels, lastModified: Date.now() }
+      return { 
+        ...state, 
+        levels: newLevels, 
+        levelOrder: state.levelOrder.filter(key => key !== action.payload),
+        lastModified: Date.now() 
+      }
+    
+    case 'UPDATE_LEVEL_ORDER':
+      return {
+        ...state,
+        levelOrder: action.payload,
+        lastModified: Date.now()
+      }
     
     case 'UPDATE_LEVEL_NAME':
       return {
@@ -176,6 +192,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       return { 
         ...state, 
         levels: action.payload.levels,
+        levelOrder: action.payload.levelOrder,
         lastModified: action.payload.lastModified
       }
     
@@ -233,14 +250,14 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         
         // Merge local and remote data with timestamps
         // Use ?? instead of || to allow 0 as a valid timestamp
-        const result = await mergeData(state.userId!, state.levels, state.lastModified ?? Date.now())
+        const result = await mergeData(state.userId!, state.levels, state.levelOrder, state.lastModified ?? Date.now())
         dispatch({ type: 'SYNC_LEVELS', payload: result })
         
         // Enable real-time sync
         enableAutoSync(
           state.userId!,
-          (levels, lastModified) => {
-            dispatch({ type: 'SYNC_LEVELS', payload: { levels, lastModified } })
+          (levels, levelOrder, lastModified) => {
+            dispatch({ type: 'SYNC_LEVELS', payload: { levels, levelOrder, lastModified } })
             setSyncStatusWithMinDuration('synced')
           },
           (error) => {
@@ -296,7 +313,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         setSyncStatusWithMinDuration('syncing')
         
         // Start the actual sync operation
-        const syncPromise = syncToFirestore(state.userId, state.levels)
+        const syncPromise = syncToFirestore(state.userId, state.levels, state.levelOrder)
         
         // Wait for both the sync to complete AND the minimum visual duration
         await Promise.all([

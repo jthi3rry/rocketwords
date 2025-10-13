@@ -30,33 +30,48 @@ export default function ParentModeScreen() {
       return '✉️' // Email icon
     }
   }
-  const [selectedLevel, setSelectedLevel] = useState('')
+  const [expandedLevel, setExpandedLevel] = useState<string | null>(null)
   const [newLevelName, setNewLevelName] = useState('')
   const [levelName, setLevelName] = useState('')
   const [newWord, setNewWord] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [wordToDelete, setWordToDelete] = useState<string | null>(null)
   const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false)
   const [showDeletionSuccess, setShowDeletionSuccess] = useState(false)
   const [showAddLevelInput, setShowAddLevelInput] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const addLevelTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const levelNameInputRef = useRef<HTMLInputElement | null>(null)
+  const newLevelNameInputRef = useRef<HTMLInputElement | null>(null)
 
+  // Update levelName when expandedLevel changes (but not when user is typing)
   useEffect(() => {
-    const firstLevelKey = getFirstLevelKey(state.levels)
-    if (firstLevelKey && !selectedLevel) {
-      setSelectedLevel(firstLevelKey)
+    if (expandedLevel && state.levels[expandedLevel]) {
+      // Only update if the input is not currently focused (user not typing)
+      if (document.activeElement !== levelNameInputRef.current) {
+        setLevelName(state.levels[expandedLevel].name)
+      }
     }
-  }, [state.levels, selectedLevel])
+  }, [expandedLevel, state.levels])
 
-  // Update levelName when selectedLevel changes
+  // Focus on the level name input when a new level is expanded (after auto-save)
   useEffect(() => {
-    if (selectedLevel && state.levels[selectedLevel]) {
-      setLevelName(state.levels[selectedLevel].name)
+    if (expandedLevel && levelNameInputRef.current && !showAddLevelInput) {
+      // Small delay to ensure the DOM has updated
+      const focusTimer = setTimeout(() => {
+        if (levelNameInputRef.current) {
+          levelNameInputRef.current.focus()
+          // Set cursor to end of text
+          const length = levelNameInputRef.current.value.length
+          levelNameInputRef.current.setSelectionRange(length, length)
+        }
+      }, 100)
+      
+      return () => clearTimeout(focusTimer)
     }
-  }, [selectedLevel, state.levels])
+  }, [expandedLevel, showAddLevelInput])
 
-  const handleAddLevel = () => {
+
+  const handleAddLevel = (clearInput = true) => {
     const newName = newLevelName.trim()
     if (newName) {
       const newKey = `level_${Date.now()}`
@@ -67,16 +82,20 @@ export default function ParentModeScreen() {
           level: { name: newName, words: [] }
         }
       })
-      setNewLevelName('')
-      setSelectedLevel(newKey)
-      setLevelName(newName) // Set the level name for the new level
-      setShowAddLevelInput(false) // Hide the input after creating
+      if (clearInput) {
+        setNewLevelName('')
+        setExpandedLevel(newKey) // Auto-expand the new level
+        setLevelName(newName) // Set the level name for the new level
+        setShowAddLevelInput(false) // Hide the input after creating
+      }
     }
   }
 
   const handleShowAddLevelInput = () => {
     setShowAddLevelInput(true)
     setNewLevelName('')
+    setExpandedLevel(null) // Collapse any currently expanded level
+    // Focus will be set by autoFocus on the input field
   }
 
   const handleCancelAddLevel = () => {
@@ -97,6 +116,7 @@ export default function ParentModeScreen() {
     if (newName.trim()) {
       // Set new timeout for auto-save (2 second delay)
       addLevelTimeoutRef.current = setTimeout(() => {
+        // Save the level and transition to the newly created level's input
         const trimmedName = newName.trim()
         if (trimmedName) {
           const newKey = `level_${Date.now()}`
@@ -107,10 +127,13 @@ export default function ParentModeScreen() {
               level: { name: trimmedName, words: [] }
             }
           })
+          // Clear the add level input and hide it
           setNewLevelName('')
-          setSelectedLevel(newKey)
-          setLevelName(trimmedName)
           setShowAddLevelInput(false)
+          // Expand the newly created level
+          setExpandedLevel(newKey)
+          setLevelName(trimmedName)
+          // Focus will be set on the newly created level's input field
         }
       }, 2000)
     }
@@ -123,18 +146,33 @@ export default function ParentModeScreen() {
     }
     const trimmedName = newLevelName.trim()
     if (trimmedName) {
-      const newKey = `level_${Date.now()}`
-      dispatch({
-        type: 'ADD_LEVEL',
-        payload: {
-          key: newKey,
-          level: { name: trimmedName, words: [] }
+      // Check if a level with this name already exists (from auto-save)
+      const existingLevel = Object.values(state.levels).find(level => level.name === trimmedName)
+      
+      if (existingLevel) {
+        // Level already exists from auto-save, just expand it and clear input
+        const existingKey = Object.keys(state.levels).find(key => state.levels[key].name === trimmedName)
+        if (existingKey) {
+          setExpandedLevel(existingKey)
+          setLevelName(trimmedName)
         }
-      })
-      setNewLevelName('')
-      setSelectedLevel(newKey)
-      setLevelName(trimmedName)
-      setShowAddLevelInput(false)
+        setNewLevelName('')
+        setShowAddLevelInput(false)
+      } else {
+        // Create new level
+        const newKey = `level_${Date.now()}`
+        dispatch({
+          type: 'ADD_LEVEL',
+          payload: {
+            key: newKey,
+            level: { name: trimmedName, words: [] }
+          }
+        })
+        setNewLevelName('')
+        setExpandedLevel(newKey) // Auto-expand the new level
+        setLevelName(trimmedName)
+        setShowAddLevelInput(false)
+      }
     } else {
       // If empty, just exit add mode without creating a level
       setShowAddLevelInput(false)
@@ -142,11 +180,13 @@ export default function ParentModeScreen() {
     }
   }
 
-  const handleRemoveLevel = () => {
+  const handleRemoveLevel = (levelKey: string) => {
     if (Object.keys(state.levels).length > 1) {
-      dispatch({ type: 'REMOVE_LEVEL', payload: selectedLevel })
-      const remainingKeys = getSortedLevelKeysExcluding(state.levels, selectedLevel)
-      setSelectedLevel(remainingKeys[0] || '')
+      dispatch({ type: 'REMOVE_LEVEL', payload: levelKey })
+      // If we're deleting the expanded level, collapse all
+      if (expandedLevel === levelKey) {
+        setExpandedLevel(null)
+      }
       setShowDeleteConfirm(false)
     }
   }
@@ -159,16 +199,19 @@ export default function ParentModeScreen() {
     setShowDeleteConfirm(false)
   }
 
-  const handleSaveLevelName = () => {
+  const handleSaveLevelName = (levelKey: string) => {
     const newName = levelName.trim()
-    if (newName && state.levels[selectedLevel] && state.levels[selectedLevel].name !== newName) {
+    if (newName && state.levels[levelKey] && state.levels[levelKey].name !== newName) {
       dispatch({
         type: 'UPDATE_LEVEL_NAME',
         payload: {
-          key: selectedLevel,
+          key: levelKey,
           name: newName
         }
       })
+      // Update the local state to match what was saved (trimmed version)
+      // This prevents the useEffect from overwriting the user's input
+      setLevelName(newName)
     }
   }
 
@@ -182,16 +225,23 @@ export default function ParentModeScreen() {
     }
     
     // Set new timeout for auto-save (1 second delay)
+    // Capture the current value to avoid race conditions
     saveTimeoutRef.current = setTimeout(() => {
-      const trimmedName = newName.trim()
-      if (trimmedName && state.levels[selectedLevel] && state.levels[selectedLevel].name !== trimmedName) {
-        dispatch({
-          type: 'UPDATE_LEVEL_NAME',
-          payload: {
-            key: selectedLevel,
-            name: trimmedName
-          }
-        })
+      if (expandedLevel) {
+        // Use the current value from the input, not the state
+        const currentValue = levelNameInputRef.current?.value || ''
+        const trimmedValue = currentValue.trim()
+        if (trimmedValue && state.levels[expandedLevel] && state.levels[expandedLevel].name !== trimmedValue) {
+          dispatch({
+            type: 'UPDATE_LEVEL_NAME',
+            payload: {
+              key: expandedLevel,
+              name: trimmedValue
+            }
+          })
+          // Update the local state to match what was saved
+          setLevelName(trimmedValue)
+        }
       }
     }, 1000)
   }
@@ -201,7 +251,9 @@ export default function ParentModeScreen() {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
-    handleSaveLevelName()
+    if (expandedLevel) {
+      handleSaveLevelName(expandedLevel)
+    }
   }
 
   // Cleanup timeouts on unmount
@@ -216,22 +268,22 @@ export default function ParentModeScreen() {
     }
   }, [])
 
-  const handleAddWord = () => {
+  const handleAddWord = (levelKey: string) => {
     const input = newWord.trim()
-    if (input && state.levels[selectedLevel]) {
+    if (input && state.levels[levelKey]) {
       // Split by spaces or commas, then clean up each word
       const words = input
         .split(/[,\s]+/) // Split by commas or spaces
         .map(word => word.trim().toLowerCase()) // Trim and lowercase each word
         .filter(word => word.length > 0) // Remove empty strings
-        .filter(word => !state.levels[selectedLevel].words.includes(word)) // Remove duplicates
+        .filter(word => !state.levels[levelKey].words.includes(word)) // Remove duplicates
       
       // Add each word
       words.forEach(word => {
         dispatch({
           type: 'ADD_WORD',
           payload: {
-            levelKey: selectedLevel,
+            levelKey: levelKey,
             word: word
           }
         })
@@ -241,23 +293,15 @@ export default function ParentModeScreen() {
     }
   }
 
-  const handleRemoveWord = (wordToRemove: string) => {
+
+  const handleDeleteWordClick = (levelKey: string, word: string) => {
     dispatch({
       type: 'REMOVE_WORD',
       payload: {
-        levelKey: selectedLevel,
-        word: wordToRemove
+        levelKey: levelKey,
+        word: word
       }
     })
-    setWordToDelete(null)
-  }
-
-  const handleDeleteWordClick = (word: string) => {
-    setWordToDelete(word)
-  }
-
-  const handleCancelWordDelete = () => {
-    setWordToDelete(null)
   }
 
 
@@ -300,8 +344,16 @@ export default function ParentModeScreen() {
     setShowDeleteAccountConfirm(false)
   }
 
-  const currentWords = showAddLevelInput ? [] : (selectedLevel ? (state.levels[selectedLevel]?.words || []) : [])
   const canRemoveLevel = Object.keys(state.levels).length > 1
+
+  // Accordion toggle functionality
+  const toggleAccordion = (levelKey: string) => {
+    if (expandedLevel === levelKey) {
+      setExpandedLevel(null) // Collapse if already expanded
+    } else {
+      setExpandedLevel(levelKey) // Expand the clicked level
+    }
+  }
 
   // Parent mode works locally without authentication
   // Account management is only for cloud backup linking
@@ -327,188 +379,207 @@ export default function ParentModeScreen() {
           </span>
         </div>
         
-      
-        {/* Level Management */}
-        <div className="p-3 bg-gray-800 rounded-lg border-2 border-gray-600">
-          
-          {/* Level Selector Pills */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {/* Add New Level Pill */}
-            <button
-              onClick={handleShowAddLevelInput}
-              className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
-                showAddLevelInput
-                  ? 'bg-green-500 text-white shadow-lg transform scale-105'
-                  : 'bg-green-500 text-white hover:bg-green-600'
-              }`}
-            >
-              <span>+</span> Add
-            </button>
+        {/* Accordion List */}
+        <div className="space-y-2">
+          {getSortedLevelKeys(state.levels, state.levelOrder).map(key => {
+            const level = state.levels[key]
+            const isExpanded = expandedLevel === key
+            const words = level.words || []
             
-            {getSortedLevelKeys(state.levels).map(key => (
-              <div
-                key={key}
-                className={`group relative inline-flex items-center px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  selectedLevel === key && !showAddLevelInput
-                    ? 'bg-blue-500 text-white shadow-lg transform scale-105'
-                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500 hover:text-white'
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    setSelectedLevel(key)
-                    setShowAddLevelInput(false) // Exit add mode when selecting existing level
-                  }}
-                  className="pr-1"
+            return (
+              <div key={key} className="bg-gray-800 rounded-lg border-2 border-gray-600 overflow-hidden">
+                {/* Accordion Header */}
+                <div 
+                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-700 transition-colors"
+                  onClick={() => toggleAccordion(key)}
                 >
-                  {state.levels[key].name}
-                </button>
-                {!showDeleteConfirm && canRemoveLevel && (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteClick()
-                    }}
-                    className="text-red-400 hover:text-red-300 font-bold text-xs p-0.5 rounded-full hover:bg-red-900/20 transition-colors"
-                    title="Delete this level"
-                  >
-                    ✕
-                  </button>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                      ▶
+                    </span>
+                    <span className="font-medium text-gray-200 truncate">{level.name}</span>
+                    <span className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded-full">
+                      {words.length} word{words.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Accordion Content */}
+                {isExpanded && (
+                  <div className="border-t border-gray-600 p-3 space-y-3">
+                    {/* Level Name Edit */}
+                    <div className="relative">
+                      <input 
+                        ref={levelNameInputRef}
+                        type="text" 
+                        value={levelName}
+                        onChange={handleLevelNameChange}
+                        onBlur={handleLevelNameBlur}
+                        placeholder="Level name" 
+                        className="w-full px-3 py-2 pr-10 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-sm bg-gray-700 text-white"
+                      />
+                      {canRemoveLevel && !showDeleteConfirm && (
+                        <button
+                          onClick={() => setShowDeleteConfirm(true)}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-400 hover:text-red-300 p-1 rounded hover:bg-red-900/20 transition-colors"
+                          title="Delete level"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Delete Confirmation */}
+                    {showDeleteConfirm && (
+                      <div className="p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+                        <p className="text-sm text-red-300 mb-3">
+                          Delete &ldquo;<span className="font-semibold">{level.name}</span>&rdquo; and all {words.length} word{words.length !== 1 ? 's' : ''}?
+                        </p>
+                        <div className="flex gap-2 justify-end">
+                          <button 
+                            onClick={handleCancelDelete}
+                            className="btn-game px-3 py-1 rounded-full text-xs font-bold text-gray-300 bg-gray-600 hover:bg-gray-500 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button 
+                            onClick={() => handleRemoveLevel(key)}
+                            className="btn-game px-3 py-1 rounded-full text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-colors"
+                          >
+                            Delete ✕
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Words Display */}
+                    {words.length === 0 ? (
+                      <div className="p-4 bg-gray-700 rounded-lg border-2 border-dashed border-gray-600 text-center">
+                        <p className="text-gray-400 text-sm mb-2">No words yet! 🌱</p>
+                        <p className="text-gray-500 text-xs">Add your first word below to get started</p>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-700 p-3 rounded-lg border border-gray-600 max-h-48 overflow-y-auto">
+                        <div className="flex flex-wrap gap-2">
+                          {words.map((word, index) => (
+                            <div
+                              key={index}
+                              className="group relative inline-flex items-center px-3 py-1.5 bg-gray-600 rounded-full text-sm font-medium text-gray-200 hover:bg-gray-500 transition-colors"
+                            >
+                              <span className="pr-1">{formatWord(word, state.isUpperCase)}</span>
+                              <button 
+                                onClick={() => handleDeleteWordClick(key, word)}
+                                className="text-red-400 hover:text-red-300 font-bold text-xs p-0.5 rounded-full hover:bg-red-900/20 transition-colors"
+                                title="Remove word"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Add Word Input */}
+                    <div className="flex gap-2 items-center">
+                      <input 
+                        type="text" 
+                        value={newWord}
+                        onChange={(e) => setNewWord(e.target.value)}
+                        placeholder="Words (space or comma separated)... ✍️" 
+                        className="flex-1 px-3 py-2 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-sm bg-gray-700 text-white"
+                      />
+                      <button 
+                        onClick={() => handleAddWord(key)}
+                        className="btn-game px-3 py-2 rounded-full text-sm font-bold text-white bg-green-500 hover:bg-green-600 transition-colors"
+                      >
+                        Add ➕
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
-            ))}
-          </div>
-      
-          {/* Conditional UI based on add/edit mode */}
-          {showAddLevelInput ? (
-            /* Add New Level UI */
-            <div className="flex gap-2 items-center">
-              <input 
-                type="text" 
-                value={newLevelName}
-                onChange={handleNewLevelNameChange}
-                onBlur={handleNewLevelNameBlur}
-                placeholder="e.g., 'Animals 🐱'" 
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-sm bg-gray-700 text-white"
-                autoFocus
-              />
-            </div>
-          ) : (
-            /* Edit Existing Level UI */
-            <div className="flex gap-2 items-center">
-              <input 
-                type="text" 
-                value={levelName}
-                onChange={handleLevelNameChange}
-                onBlur={handleLevelNameBlur}
-                placeholder="Level name" 
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-sm bg-gray-700 text-white"
-              />
-              {showDeleteConfirm && (
-                <div className="flex gap-1">
-                  <button 
-                    onClick={handleCancelDelete}
-                    className="btn-game px-2 py-2 rounded-lg text-xs font-bold text-gray-300 bg-gray-600 hover:bg-gray-500 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={handleRemoveLevel}
-                    className="btn-game px-2 py-2 rounded-lg text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-colors"
-                  >
-                    Delete ✕
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {showDeleteConfirm && (
-            <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded-lg">
-              <p className="text-xs text-red-300">
-                Delete &ldquo;<span className="font-semibold">{state.levels[selectedLevel]?.name}</span>&rdquo; and all {currentWords.length} word{currentWords.length !== 1 ? 's' : ''}?
-              </p>
-            </div>
-          )}
-          
-          <p className="text-xs text-gray-500 mt-2">Changes save automatically ✨</p>
-        </div>
-      </div>
+            )
+          })}
 
-      {/* Manage Words Section */}
-      <div className="w-full max-w-lg mb-4 sm:mb-6">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg sm:text-xl font-bold">
-            {showAddLevelInput ? 'Words in New Level 📖' : 'Words in This Level 📖'}
-          </h3>
-          <span className="text-sm text-gray-400 bg-gray-700 px-2 py-1 rounded-full">
-            {currentWords.length} word{currentWords.length !== 1 ? 's' : ''}
-          </span>
-        </div>
-        
-        {currentWords.length === 0 ? (
-          <div className="bg-gray-800 p-6 sm:p-8 rounded-xl border-2 border-dashed border-gray-600 text-center">
-            <p className="text-gray-400 text-sm sm:text-base mb-2">No words yet! 🌱</p>
-            <p className="text-gray-500 text-xs sm:text-sm">Add your first word below to get started</p>
-          </div>
-        ) : (
-          <div className="bg-gray-800 p-3 sm:p-4 rounded-xl border-2 border-gray-600 max-h-48 sm:max-h-64 overflow-y-auto">
-            {wordToDelete ? (
-              <div className="p-3 bg-red-900/20 border border-red-500/30 rounded-lg mb-3">
-                <p className="text-sm text-red-300 mb-3">
-                  Delete &ldquo;<span className="font-semibold">{wordToDelete}</span>&rdquo;?
-                </p>
-                <div className="flex gap-2 justify-end">
-                  <button 
-                    onClick={handleCancelWordDelete}
+          {/* New Level Creation - Appears as a real accordion item */}
+          {showAddLevelInput && (
+            <div className="bg-gray-800 rounded-lg border-2 border-gray-600 overflow-hidden">
+              {/* Accordion Header */}
+              <div className="flex items-center justify-between p-3">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="transform transition-transform duration-200 rotate-90">
+                    ▶
+                  </span>
+                  <span className="font-medium text-gray-200 truncate">New Level</span>
+                  <span className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded-full">
+                    0 words
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleCancelAddLevel}
                     className="btn-game px-3 py-1 rounded-full text-xs font-bold text-gray-300 bg-gray-600 hover:bg-gray-500 transition-colors"
+                    title="Cancel"
                   >
                     Cancel
-                  </button>
-                  <button 
-                    onClick={() => handleRemoveWord(wordToDelete)}
-                    className="btn-game px-3 py-1 rounded-full text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-colors"
-                  >
-                    Delete ✕
                   </button>
                 </div>
               </div>
-            ) : null}
-            <div className="flex flex-wrap gap-2">
-              {currentWords.map((word, index) => (
-                <div
-                  key={index}
-                  className="group relative inline-flex items-center px-3 py-1.5 bg-gray-700 rounded-full text-sm font-medium text-gray-200 hover:bg-gray-600 transition-colors"
-                >
-                  <span className="pr-1">{formatWord(word, state.isUpperCase)}</span>
+
+              {/* Accordion Content */}
+              <div className="border-t border-gray-600 p-3 space-y-3">
+                {/* Level Name Edit */}
+                <div className="flex gap-2 items-center">
+                  <input 
+                    ref={newLevelNameInputRef}
+                    type="text" 
+                    value={newLevelName}
+                    onChange={handleNewLevelNameChange}
+                    onBlur={handleNewLevelNameBlur}
+                    placeholder="Level name" 
+                    className="flex-1 px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-sm bg-gray-700 text-white"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Words Display - Empty state */}
+                <div className="p-4 bg-gray-700 rounded-lg border-2 border-dashed border-gray-600 text-center">
+                  <p className="text-gray-400 text-sm mb-2">No words yet! 🌱</p>
+                  <p className="text-gray-500 text-xs">Add your first word below to get started</p>
+                </div>
+
+                {/* Add Word Input - Disabled until level is saved */}
+                <div className="flex gap-2 items-center">
+                  <input 
+                    type="text" 
+                    placeholder="Words (space or comma separated)... ✍️" 
+                    className="flex-1 px-3 py-2 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-sm bg-gray-700 text-white"
+                    disabled
+                  />
                   <button 
-                    onClick={() => handleDeleteWordClick(word)}
-                    className="text-red-400 hover:text-red-300 font-bold text-xs p-0.5 rounded-full hover:bg-red-900/20 transition-colors"
-                    title="Remove word"
+                    className="btn-game px-3 py-2 rounded-full text-sm font-bold text-gray-300 bg-gray-600 cursor-not-allowed"
+                    disabled
                   >
-                    ✕
+                    Add ➕
                   </button>
                 </div>
-              ))}
+                <p className="text-xs text-gray-500">Save the level name first to add words</p>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-      
-      <div className="w-full max-w-lg mb-4 sm:mb-6 flex flex-col md:flex-row gap-2 items-center">
-        <input 
-          type="text" 
-          value={newWord}
-          onChange={(e) => setNewWord(e.target.value)}
-          placeholder="Words (space or comma separated)... ✍️" 
-          className="flex-grow px-3 py-2 rounded-lg border-2 border-gray-600 focus:outline-none focus:border-blue-500 text-sm bg-gray-800 text-white w-full md:w-auto"
-        />
-        <button 
-          onClick={handleAddWord}
-          className="btn-game px-3 py-2 rounded-full text-sm font-bold text-white bg-green-500 hover:bg-green-600 transition-colors w-full md:w-auto"
-        >
-          Add Words ➕
-        </button>
+          )}
+        </div>
+
+        {/* Add New Level Button */}
+        <div className="mt-4">
+          <button
+            onClick={handleShowAddLevelInput}
+            className="w-full px-4 py-3 rounded-lg border-2 border-dashed border-gray-600 text-gray-400 hover:text-gray-300 hover:border-gray-500 transition-colors flex items-center justify-center gap-2"
+          >
+            <span className="text-lg">+</span>
+            Add New Level
+          </button>
+        </div>
       </div>
       
       {/* Cloud Backup Section */}
@@ -524,7 +595,7 @@ export default function ParentModeScreen() {
               <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
                 {getAccountTypeIcon()}
               </div>
-              <span className="text-sm text-gray-300 truncate flex-1 min-w-0">
+              <span className="text-sm text-gray-300 truncate flex-1 min-w-0 text-left">
                 {user.email}
               </span>
               <div className="flex-shrink-0">

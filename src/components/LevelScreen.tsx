@@ -44,7 +44,7 @@ export default function LevelScreen() {
         Choose your adventure!
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 w-full max-w-xl mb-8 sm:mb-12">
-        {getSortedLevelKeys(state.levels).map(key => (
+        {getSortedLevelKeys(state.levels, state.levelOrder).map(key => (
           <button
             key={key}
             onClick={() => handleLevelSelect(key)}

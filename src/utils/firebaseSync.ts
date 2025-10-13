@@ -15,11 +15,13 @@ interface Level {
 
 interface FirestoreData {
   levels: Record<string, Level>
+  levelOrder: string[]
   lastModified: Timestamp
 }
 
 interface LocalData {
   levels: Record<string, Level>
+  levelOrder: string[]
 }
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'offline'
@@ -31,7 +33,8 @@ let syncUnsubscribe: Unsubscribe | null = null
  */
 export const syncToFirestore = async (
   userId: string,
-  levels: Record<string, Level>
+  levels: Record<string, Level>,
+  levelOrder: string[]
 ): Promise<void> => {
   try {
     const firebaseDb = getFirebaseDb()
@@ -42,6 +45,7 @@ export const syncToFirestore = async (
     const userDocRef = doc(firebaseDb, 'users', userId, 'gameData', 'levels')
     const data: FirestoreData = {
       levels,
+      levelOrder,
       lastModified: Timestamp.now(),
     }
     await setDoc(userDocRef, data)
@@ -56,7 +60,7 @@ export const syncToFirestore = async (
  */
 export const syncFromFirestore = async (
   userId: string
-): Promise<Record<string, Level> | null> => {
+): Promise<{ levels: Record<string, Level>; levelOrder: string[] } | null> => {
   try {
     const firebaseDb = getFirebaseDb()
     if (!firebaseDb) {
@@ -68,7 +72,10 @@ export const syncFromFirestore = async (
 
     if (docSnap.exists()) {
       const data = docSnap.data() as FirestoreData
-      return data.levels
+      return {
+        levels: data.levels,
+        levelOrder: data.levelOrder || Object.keys(data.levels) // fallback for old data
+      }
     }
     return null
   } catch (error) {
@@ -84,8 +91,9 @@ export const syncFromFirestore = async (
 export const mergeData = async (
   userId: string,
   localLevels: Record<string, Level>,
+  localLevelOrder: string[],
   localLastModified: number
-): Promise<{ levels: Record<string, Level>; lastModified: number }> => {
+): Promise<{ levels: Record<string, Level>; levelOrder: string[]; lastModified: number }> => {
   try {
     const firebaseDb = getFirebaseDb()
     if (!firebaseDb) {
@@ -97,15 +105,15 @@ export const mergeData = async (
 
     if (!docSnap.exists()) {
       // No remote data, upload local data
-      await syncToFirestore(userId, localLevels)
-      return { levels: localLevels, lastModified: localLastModified }
+      await syncToFirestore(userId, localLevels, localLevelOrder)
+      return { levels: localLevels, levelOrder: localLevelOrder, lastModified: localLastModified }
     }
 
     const remoteData = docSnap.data() as FirestoreData
     if (!remoteData.lastModified) {
       // If remote data has no timestamp, use local data
-      await syncToFirestore(userId, localLevels)
-      return { levels: localLevels, lastModified: localLastModified }
+      await syncToFirestore(userId, localLevels, localLevelOrder)
+      return { levels: localLevels, levelOrder: localLevelOrder, lastModified: localLastModified }
     }
     const remoteTimestamp = remoteData.lastModified.toMillis()
 
@@ -113,11 +121,15 @@ export const mergeData = async (
     // Compare actual timestamps to determine which is newer
     if (localLastModified > remoteTimestamp) {
       // Local is newer, upload to Firestore
-      await syncToFirestore(userId, localLevels)
-      return { levels: localLevels, lastModified: localLastModified }
+      await syncToFirestore(userId, localLevels, localLevelOrder)
+      return { levels: localLevels, levelOrder: localLevelOrder, lastModified: localLastModified }
     } else {
       // Remote is newer or same, use remote data
-      return { levels: remoteData.levels, lastModified: remoteTimestamp }
+      return { 
+        levels: remoteData.levels, 
+        levelOrder: remoteData.levelOrder || Object.keys(remoteData.levels), // fallback for old data
+        lastModified: remoteTimestamp 
+      }
     }
   } catch (error) {
     console.error('Error merging data:', error)
@@ -131,7 +143,7 @@ export const mergeData = async (
  */
 export const enableAutoSync = (
   userId: string,
-  onUpdate: (levels: Record<string, Level>, lastModified: number) => void,
+  onUpdate: (levels: Record<string, Level>, levelOrder: string[], lastModified: number) => void,
   onError: (error: Error) => void
 ): Unsubscribe => {
   // Unsubscribe from previous listener if exists
@@ -153,7 +165,11 @@ export const enableAutoSync = (
     (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data() as FirestoreData
-        onUpdate(data.levels, data.lastModified.toMillis())
+        onUpdate(
+          data.levels, 
+          data.levelOrder || Object.keys(data.levels), // fallback for old data
+          data.lastModified.toMillis()
+        )
       }
     },
     (error) => {

@@ -73,7 +73,7 @@ describe('LevelScreen', () => {
 
     renderWithProviders(<LevelScreen />)
 
-    expect(getSortedLevelKeys).toHaveBeenCalledWith(mockLevels)
+    expect(getSortedLevelKeys).toHaveBeenCalledWith(mockLevels, mockLevelOrder)
   })
 
   it('should dispatch SET_LEVEL_DATA and navigate to mode when a level is selected', () => {

@@ -88,38 +88,62 @@ export const formatLetter = (letter: string, isUpperCase: boolean): string => {
 }
 
 /**
- * Sorts level keys by level name in ascending order
+ * Sorts level keys by their order in the levelOrder array
  * @param levels - The levels object
- * @returns Array of level keys sorted by name
+ * @param levelOrder - Array of level keys in the desired order
+ * @returns Array of level keys sorted by the order array
  */
-export const getSortedLevelKeys = (levels: Record<string, Level>): string[] => {
-  return Object.keys(levels).sort((a, b) => 
-    levels[a].name.localeCompare(levels[b].name)
-  )
+export const getSortedLevelKeys = (levels: Record<string, Level>, levelOrder: string[]): string[] => {
+  // Fallback to Object.keys if levelOrder is not provided (for backward compatibility)
+  const order = levelOrder || Object.keys(levels)
+  return order.filter(key => levels[key] !== undefined)
 }
 
 /**
- * Gets the first level key after sorting by name
+ * Gets the first level key after sorting by order
  * @param levels - The levels object
- * @returns The first level key alphabetically, or null if no levels
+ * @param levelOrder - Array of level keys in the desired order
+ * @returns The first level key by order, or null if no levels
  */
-export const getFirstLevelKey = (levels: Record<string, Level>): string | null => {
-  const sortedKeys = getSortedLevelKeys(levels)
+export const getFirstLevelKey = (levels: Record<string, Level>, levelOrder: string[]): string | null => {
+  const sortedKeys = getSortedLevelKeys(levels, levelOrder)
   return sortedKeys.length > 0 ? sortedKeys[0] : null
 }
 
 /**
- * Gets level keys excluding a specific level, sorted by name
+ * Gets level keys excluding a specific level, sorted by order
  * @param levels - The levels object
+ * @param levelOrder - Array of level keys in the desired order
  * @param excludeKey - The level key to exclude
- * @returns Array of level keys (excluding the specified one) sorted by name
+ * @returns Array of level keys (excluding the specified one) sorted by order
  */
 export const getSortedLevelKeysExcluding = (
   levels: Record<string, Level>, 
+  levelOrder: string[],
   excludeKey: string
 ): string[] => {
-  return Object.keys(levels)
-    .filter(key => key !== excludeKey)
-    .sort((a, b) => levels[a].name.localeCompare(levels[b].name))
+  // Fallback to Object.keys if levelOrder is not provided (for backward compatibility)
+  const order = levelOrder || Object.keys(levels)
+  return order.filter(key => levels[key] !== undefined && key !== excludeKey)
+}
+
+/**
+ * Adds a new level key to the end of the level order array
+ * @param levelOrder - Current level order array
+ * @param newKey - The new level key to add
+ * @returns Updated level order array
+ */
+export const addLevelToOrder = (levelOrder: string[], newKey: string): string[] => {
+  return [...levelOrder, newKey]
+}
+
+/**
+ * Removes a level key from the level order array
+ * @param levelOrder - Current level order array
+ * @param keyToRemove - The level key to remove
+ * @returns Updated level order array
+ */
+export const removeLevelFromOrder = (levelOrder: string[], keyToRemove: string): string[] => {
+  return levelOrder.filter(key => key !== keyToRemove)
 }
 
