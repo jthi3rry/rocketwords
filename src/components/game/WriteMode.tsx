@@ -111,27 +111,27 @@ export default function WriteMode({ onFeedback, onPlayWord }: WriteModeProps) {
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
         <RepeatButton />
         <CaseToggleButton />
       </div>
       <div className="flex flex-col items-center w-full max-w-xl">
-        <div className="p-8 bg-gray-800 rounded-3xl w-full text-center mb-8 shadow-md">
-          <p className="text-5xl md:text-7xl font-extrabold text-blue-400 mb-4">
+        <div className="p-4 sm:p-6 md:p-8 bg-gray-800 rounded-3xl w-full text-center mb-4 sm:mb-6 md:mb-8 shadow-md">
+          <p className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-blue-400 mb-2 sm:mb-3 md:mb-4">
             {currentWord}
           </p>
-          <p className="text-3xl md:text-5xl font-extrabold text-purple-400 p-2 min-h-[4rem]">
+          <p className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-extrabold text-purple-400 p-2 min-h-[2rem] sm:min-h-[3rem] md:min-h-[4rem]">
             {displayTypedWord()}
           </p>
         </div>
       </div>
-      <div className="flex flex-wrap justify-center gap-2 mt-4 min-h-[6rem]">
+      <div className="flex flex-wrap justify-center gap-1 sm:gap-2 mt-2 sm:mt-3 md:mt-4 min-h-[4rem] sm:min-h-[5rem] md:min-h-[6rem]">
         {letterButtons.map((letterOption) => (
           <button
             key={letterOption.id}
             onClick={() => handleLetterTap(letterOption.id)}
             disabled={buttonsDisabled}
-            className={`btn-game btn-answer px-6 py-4 rounded-xl text-3xl font-bold hover:scale-110 ${
+            className={`btn-game btn-answer px-5 sm:px-7 md:px-9 py-2 sm:py-3 md:py-4 rounded-xl text-xl sm:text-2xl md:text-3xl font-bold hover:scale-110 ${
               buttonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >

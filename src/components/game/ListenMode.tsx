@@ -81,11 +81,11 @@ export default function ListenMode({ onFeedback, onPlayWord }: ListenModeProps) 
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
         <RepeatButton />
         <CaseToggleButton />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 w-full max-w-xl">
         {options.map((word, index) => {
           const isDisabled = buttonsDisabled || disabledButtons.has(word)
           return (
@@ -93,7 +93,7 @@ export default function ListenMode({ onFeedback, onPlayWord }: ListenModeProps) 
               key={index}
               onClick={() => handleTapAnswer(word)}
               disabled={isDisabled}
-              className={`btn-game btn-answer p-6 rounded-xl text-2xl font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 w-full md:w-auto ${
+              className={`btn-game btn-answer p-3 sm:p-4 md:p-6 rounded-xl text-lg sm:text-xl md:text-2xl font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 w-full md:w-auto ${
                 isDisabled ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >

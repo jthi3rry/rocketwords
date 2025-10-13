@@ -192,6 +192,12 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   const isSyncInitialized = useRef(false)
   const isInitialMount = useRef(true)
   const previousLevelsRef = useRef<string>('')
+  const syncStatusTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Helper function to set sync status (simplified since we handle timing in the sync operation)
+  const setSyncStatusWithMinDuration = (status: 'syncing' | 'synced' | 'error' | 'offline' | 'idle') => {
+    dispatch({ type: 'SET_SYNC_STATUS', payload: status })
+  }
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -235,15 +241,15 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
           state.userId!,
           (levels, lastModified) => {
             dispatch({ type: 'SYNC_LEVELS', payload: { levels, lastModified } })
-            dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' })
+            setSyncStatusWithMinDuration('synced')
           },
           (error) => {
             console.error('Sync error:', error)
-            dispatch({ type: 'SET_SYNC_STATUS', payload: 'error' })
+            setSyncStatusWithMinDuration('error')
           }
         )
         
-        dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' })
+        setSyncStatusWithMinDuration('synced')
         isSyncInitialized.current = true
       } catch (error) {
         console.error('Initial sync error:', error)
@@ -286,14 +292,25 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
       if (!state.userId) return // Double check in async context
       
       try {
-        dispatch({ type: 'SET_SYNC_STATUS', payload: 'syncing' })
-        await syncToFirestore(state.userId, state.levels)
-        dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' })
-            } catch (error) {
-              console.error('Sync error:', error)
-              dispatch({ type: 'SET_SYNC_STATUS', payload: 'error' })
-            }
-    }, 2000) // Increased to 2 seconds for better batching
+        console.log('Starting sync...')
+        setSyncStatusWithMinDuration('syncing')
+        
+        // Start the actual sync operation
+        const syncPromise = syncToFirestore(state.userId, state.levels)
+        
+        // Wait for both the sync to complete AND the minimum visual duration
+        await Promise.all([
+          syncPromise,
+          new Promise(resolve => setTimeout(resolve, 1000)) // Minimum 1 second visual feedback
+        ])
+        
+        console.log('Sync completed, setting to synced')
+        setSyncStatusWithMinDuration('synced')
+      } catch (error) {
+        console.error('Sync error:', error)
+        setSyncStatusWithMinDuration('error')
+      }
+    }, 500) // Reduced to 500ms for faster feedback
 
     return () => clearTimeout(syncTimer)
   }, [state.levels, state.userId])

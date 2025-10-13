@@ -65,27 +65,27 @@ export default function ReadMode({ onFeedback, onPlayWord }: ReadModeProps) {
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
         <RepeatButton />
         <CaseToggleButton />
       </div>
       <div 
-        className="p-8 bg-gray-800 rounded-3xl w-full max-w-2xl text-center mb-8 shadow-md"
+        className="p-4 sm:p-6 md:p-8 bg-gray-800 rounded-3xl w-full max-w-2xl text-center mb-4 sm:mb-6 md:mb-8 shadow-md"
       >
-        <p className="text-5xl md:text-7xl font-extrabold text-blue-400">
+        <p className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-blue-400">
           {currentWord}
         </p>
       </div>
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-2 sm:gap-3 md:gap-4">
         <button 
           onClick={handleISaidIt}
-          className="btn-game btn-answer px-8 py-4 rounded-full text-2xl font-bold text-white bg-green-500 hover:bg-green-600 transition-colors"
+          className="btn-game btn-answer px-6 sm:px-8 py-3 sm:py-4 rounded-full text-lg sm:text-xl md:text-2xl font-bold text-white bg-green-500 hover:bg-green-600 transition-colors"
         >
           I said it! 🎉
         </button>
         <button 
           onClick={handleNextWord}
-          className="btn-game btn-mode px-8 py-4 rounded-full text-2xl font-bold text-white bg-purple-500 hover:bg-purple-600 transition-colors"
+          className="btn-game btn-mode px-6 sm:px-8 py-3 sm:py-4 rounded-full text-lg sm:text-xl md:text-2xl font-bold text-white bg-purple-500 hover:bg-purple-600 transition-colors"
         >
           Next Word ➡️
         </button>

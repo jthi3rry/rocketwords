@@ -38,6 +38,13 @@ export default function SyncStatusIndicator({ status, variant = 'inline' }: Sync
           color: 'text-red-400',
           bgColor: 'bg-red-500'
         }
+      case 'idle':
+        return {
+          icon: '○',
+          text: 'Ready',
+          color: 'text-gray-400',
+          bgColor: 'bg-gray-500'
+        }
       default:
         return null
     }
