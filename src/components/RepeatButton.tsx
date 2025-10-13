@@ -14,9 +14,9 @@ export default function RepeatButton() {
   return (
     <button 
       onClick={playCurrentWord}
-      className="btn-game btn-mode p-4 rounded-full"
+      className="btn-game btn-mode p-2 sm:p-3 md:p-4 rounded-full"
     >
-      <span className="text-6xl">🗣️</span>
+      <span className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl">🗣️</span>
     </button>
   )
 }

@@ -7,6 +7,7 @@ import ReadMode from './game/ReadMode'
 import WriteMode from './game/WriteMode'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis'
+import BackButton from './BackButton'
 
 export default function GameScreen() {
   const { state, dispatch } = useGame()
@@ -32,44 +33,41 @@ export default function GameScreen() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
-      <div className="flex justify-between items-center w-full max-w-xl mb-6">
-        <h2 className="text-3xl font-bold text-gray-300">{getModeTitle()}</h2>
+    <div className="flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 h-full w-full transition-opacity duration-500">
+      <div className="flex justify-between items-center w-full max-w-xl mb-3 sm:mb-4 md:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-300">{getModeTitle()}</h2>
         <div className="relative">
-          <span className="text-2xl font-bold text-green-400">Score: {state.score}</span>
+          <span className="text-sm sm:text-base md:text-lg lg:text-2xl font-bold text-green-400">Score: {state.score}</span>
         </div>
       </div>
       
-      {state.mode === 'listen' && (
-        <ListenMode 
-          key="listen"
-          onFeedback={showInlineFeedback}
-          onPlayWord={playWord}
-        />
-      )}
+      <div className="flex-1 flex flex-col items-center justify-center w-full pb-16 sm:pb-20">
+        {state.mode === 'listen' && (
+          <ListenMode 
+            key="listen"
+            onFeedback={showInlineFeedback}
+            onPlayWord={playWord}
+          />
+        )}
+        
+        {state.mode === 'read' && (
+          <ReadMode 
+            key="read"
+            onFeedback={showInlineFeedback}
+            onPlayWord={playWord}
+          />
+        )}
+        
+        {state.mode === 'write' && (
+          <WriteMode 
+            key="write"
+            onFeedback={showInlineFeedback}
+            onPlayWord={playWord}
+          />
+        )}
+      </div>
       
-      {state.mode === 'read' && (
-        <ReadMode 
-          key="read"
-          onFeedback={showInlineFeedback}
-          onPlayWord={playWord}
-        />
-      )}
-      
-      {state.mode === 'write' && (
-        <WriteMode 
-          key="write"
-          onFeedback={showInlineFeedback}
-          onPlayWord={playWord}
-        />
-      )}
-      
-      <button 
-        onClick={handleBack}
-        className="btn-game absolute bottom-4 left-4 px-6 py-2 rounded-full text-sm font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors"
-      >
-        Go Back ↩️
-      </button>
+      <BackButton onClick={handleBack} />
 
       {showFeedback && (
         <div className="feedback">

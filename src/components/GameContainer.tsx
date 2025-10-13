@@ -26,8 +26,8 @@ export default function GameContainer() {
   }, [user, dispatch])
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="container-bg rounded-[3rem] p-8 md:p-12 w-full max-w-4xl min-h-[70vh] flex flex-col items-center text-center relative shadow-xl">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ touchAction: 'manipulation' }}>
+      <div className="container-bg rounded-[3rem] p-8 md:p-12 w-full max-w-4xl min-h-[70vh] flex flex-col items-center text-center relative shadow-xl" style={{ touchAction: 'manipulation' }}>
         <WelcomeScreen />
         <LevelScreen />
         <ModeScreen />

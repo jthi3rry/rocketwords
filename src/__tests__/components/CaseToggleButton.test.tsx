@@ -68,7 +68,7 @@ describe('CaseToggleButton', () => {
     render(<CaseToggleButton />)
     
     const button = screen.getByRole('button')
-    expect(button).toHaveClass('btn-game', 'btn-mode', 'p-3', 'rounded-full', 'text-2xl', 'font-bold')
+    expect(button).toHaveClass('btn-game', 'btn-mode', 'p-2', 'sm:p-3', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'transition-all', 'duration-200', 'transform', 'hover:scale-105', 'active:scale-95', 'bg-blue-500', 'hover:bg-blue-600', 'text-white')
   })
 
   it('should be accessible', () => {

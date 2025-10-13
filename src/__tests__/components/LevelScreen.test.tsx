@@ -24,17 +24,20 @@ describe('LevelScreen', () => {
     level2: { name: 'Level 2', words: ['fish', 'frog', 'duck'] },
     level3: { name: 'Level 3', words: ['lion', 'tiger', 'bear'] },
   }
+  const mockLevelOrder = ['level1', 'level2', 'level3']
 
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(getSortedLevelKeys as jest.Mock).mockReturnValue(['level1', 'level2', 'level3'])
+    ;(getSortedLevelKeys as jest.Mock).mockReturnValue(mockLevelOrder)
   })
 
   it('should render level screen when currentScreen is level', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -53,7 +56,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'welcome',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -66,21 +70,24 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
 
     renderWithProviders(<LevelScreen />)
 
-    expect(getSortedLevelKeys).toHaveBeenCalledWith(mockLevels)
+    expect(getSortedLevelKeys).toHaveBeenCalledWith(mockLevels, mockLevelOrder)
   })
 
   it('should dispatch SET_LEVEL_DATA and navigate to mode when a level is selected', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -111,7 +118,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -142,7 +150,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -162,7 +171,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -198,7 +208,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -206,23 +217,24 @@ describe('LevelScreen', () => {
     renderWithProviders(<LevelScreen />)
 
     const title = screen.getByText('Choose your adventure!')
-    expect(title).toHaveClass('text-3xl', 'md:text-4xl', 'font-extrabold', 'text-purple-400', 'mb-8')
+    expect(title).toHaveClass('text-2xl', 'sm:text-3xl', 'md:text-4xl', 'font-extrabold', 'text-purple-400', 'mb-4', 'sm:mb-6', 'md:mb-8', 'text-center')
 
     const level1Button = screen.getByText('Level 1')
-    expect(level1Button).toHaveClass('btn-game', 'btn-level', 'px-6', 'py-4', 'rounded-2xl', 'text-xl', 'font-bold', 'hover:scale-105')
+    expect(level1Button).toHaveClass('btn-game', 'btn-level', 'px-4', 'sm:px-6', 'py-3', 'sm:py-4', 'rounded-2xl', 'text-lg', 'sm:text-xl', 'font-bold', 'hover:scale-105')
 
     const allLevelsButton = screen.getByText('All Levels')
-    expect(allLevelsButton).toHaveClass('btn-game', 'px-6', 'py-4', 'rounded-2xl', 'text-xl', 'font-bold', 'hover:scale-105', 'bg-blue-500', 'hover:bg-blue-600')
+    expect(allLevelsButton).toHaveClass('btn-game', 'px-4', 'sm:px-6', 'py-3', 'sm:py-4', 'rounded-2xl', 'text-lg', 'sm:text-xl', 'font-bold', 'hover:scale-105', 'bg-blue-500', 'hover:bg-blue-600')
 
     const backButton = screen.getByText('Go Back ↩️')
-    expect(backButton).toHaveClass('btn-game', 'px-6', 'py-2', 'rounded-full', 'text-sm', 'font-bold', 'text-gray-400', 'bg-gray-700', 'hover:bg-gray-600')
+    expect(backButton).toHaveClass('btn-game', 'absolute', 'bottom-4', 'left-4', 'sm:bottom-6', 'sm:left-6', 'px-4', 'sm:px-6', 'py-2', 'rounded-full', 'text-sm', 'font-bold', 'text-gray-400', 'bg-gray-700', 'hover:bg-gray-600', 'transition-colors')
   })
 
   it('should render with responsive grid layout', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -231,7 +243,7 @@ describe('LevelScreen', () => {
 
     const level1Button = screen.getByText('Level 1')
     const gridContainer = level1Button.closest('div')
-    expect(gridContainer).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-6', 'w-full', 'max-w-xl', 'mb-8')
+    expect(gridContainer).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-3', 'sm:gap-4', 'md:gap-6', 'w-full', 'max-w-xl', 'mb-8', 'sm:mb-12')
   })
 
   it('should handle empty levels gracefully', () => {
@@ -284,7 +296,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })
@@ -308,7 +321,8 @@ describe('LevelScreen', () => {
     mockUseGame.mockReturnValue({
       state: { 
         currentScreen: 'level',
-        levels: mockLevels
+        levels: mockLevels,
+        levelOrder: mockLevelOrder
       },
       dispatch: mockDispatch,
     })

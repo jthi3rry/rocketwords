@@ -84,13 +84,13 @@ describe('WelcomeScreen', () => {
 
     // Check the main container (outer div)
     const mainContainer = screen.getByText('🚀 Rocket Words! ⭐').closest('div')?.parentElement
-    expect(mainContainer).toHaveClass('flex', 'flex-col', 'items-center', 'justify-center', 'p-8', 'h-full', 'w-full')
+    expect(mainContainer).toHaveClass('flex', 'flex-col', 'items-center', 'justify-center', 'p-4', 'sm:p-6', 'md:p-8', 'h-full', 'w-full', 'transition-opacity', 'duration-500')
 
     const startButton = screen.getByText('Start 🚀')
-    expect(startButton).toHaveClass('btn-game', 'px-8', 'py-4', 'rounded-full', 'text-2xl', 'font-bold', 'text-white', 'bg-blue-500', 'hover:bg-blue-600')
+    expect(startButton).toHaveClass('btn-game', 'px-6', 'sm:px-8', 'py-3', 'sm:py-4', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'text-white', 'bg-blue-500', 'hover:bg-blue-600', 'transition-colors', 'duration-300')
 
-    const parentModeButton = screen.getByText('⚙️')
-    expect(parentModeButton).toHaveClass('absolute', 'bottom-4', 'left-4', 'p-4', 'rounded-full', 'text-gray-400', 'bg-gray-700', 'hover:bg-gray-600')
+    const parentModeButton = screen.getByText('⚙️').closest('button')
+    expect(parentModeButton).toHaveClass('absolute', 'bottom-3', 'left-3', 'sm:bottom-4', 'sm:left-4', 'px-3', 'py-2', 'sm:px-4', 'sm:py-3', 'rounded-full', 'text-gray-400', 'bg-gray-700', 'hover:bg-gray-600', 'transition-colors', 'flex', 'items-center', 'gap-2')
   })
 
   it('should render with responsive design classes', () => {
@@ -102,14 +102,14 @@ describe('WelcomeScreen', () => {
     renderWithProviders(<WelcomeScreen />)
 
     const title = screen.getByText('🚀 Rocket Words! ⭐')
-    expect(title).toHaveClass('text-4xl', 'md:text-6xl')
+    expect(title).toHaveClass('text-2xl', 'sm:text-3xl', 'md:text-4xl', 'lg:text-6xl')
 
     const description = screen.getByText("Let's learn some new words! Are you ready for an adventure?")
-    expect(description).toHaveClass('text-lg', 'md:text-xl')
+    expect(description).toHaveClass('text-base', 'sm:text-lg', 'md:text-xl')
 
     // Check that the Start button has the expected classes
     const startButton = screen.getByText('Start 🚀')
-    expect(startButton).toHaveClass('btn-game', 'px-8', 'py-4', 'rounded-full', 'text-2xl', 'font-bold')
+    expect(startButton).toHaveClass('btn-game', 'px-6', 'sm:px-8', 'py-3', 'sm:py-4', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold')
   })
 
   it('should handle multiple rapid clicks on Start button', () => {
@@ -180,8 +180,8 @@ describe('WelcomeScreen', () => {
     const startButton = screen.getByText('Start 🚀')
     expect(startButton.tagName).toBe('BUTTON')
 
-    const parentModeButton = screen.getByText('⚙️')
-    expect(parentModeButton.tagName).toBe('BUTTON')
+    const parentModeButton = screen.getByText('⚙️').closest('button')
+    expect(parentModeButton?.tagName).toBe('BUTTON')
   })
 
   it('should maintain proper component structure', () => {
@@ -202,7 +202,7 @@ describe('WelcomeScreen', () => {
     const startButton = screen.getByText('Start 🚀')
     expect(startButton).toBeInTheDocument()
 
-    const parentModeButton = screen.getByText('⚙️')
+    const parentModeButton = screen.getByText('⚙️').closest('button')
     expect(parentModeButton).toBeInTheDocument()
   })
 })

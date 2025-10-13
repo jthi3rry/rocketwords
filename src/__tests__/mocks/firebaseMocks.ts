@@ -211,6 +211,7 @@ export const createMockFirestoreData = (overrides: any = {}) => ({
   levels: {
     level1: { name: 'Level 1', words: ['mock1', 'mock2'] },
   },
+  levelOrder: ['level1'],
   lastModified: createMockTimestamp(),
   ...overrides,
 })

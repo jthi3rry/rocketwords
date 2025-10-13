@@ -1,0 +1,82 @@
+---
+description: Testing requirements for all code changes
+globs: ["src/**/*.{ts,tsx}"]
+alwaysApply: true
+---
+
+# Testing Requirements
+
+**CRITICAL: Always consider testing when making changes**
+
+## What TO Test (Functionality Only)
+
+When implementing new features, fixing bugs, or making any code changes:
+
+1. **New Components**: Create corresponding test files in `src/__tests__/components/`
+   - Follow the existing pattern: `ComponentName.test.tsx`
+   - Test user interactions, event handlers, and business logic
+   - Test component behavior and state changes
+   - Use React Testing Library best practices
+
+2. **New Hooks**: Create test files in `src/__tests__/hooks/`
+   - Test hook behavior, state changes, and edge cases
+   - Use `@testing-library/react-hooks` for custom hook testing
+
+3. **New Contexts**: Create test files in `src/__tests__/context/`
+   - Test context providers, consumers, and state management
+   - Mock dependencies appropriately
+
+4. **New Utilities**: Create test files in `src/__tests__/utils/`
+   - Test all public functions and edge cases
+   - Ensure 100% coverage for utility functions
+
+5. **Firebase Integration**: Add integration tests in `src/__tests__/integration/firebase/`
+   - Test authentication, data sync, and Firebase-specific functionality
+   - Use Firebase emulators for testing
+
+6. **Bug Fixes**: Update existing tests or add new ones to prevent regression
+   - Ensure the bug is properly covered by tests
+   - Add edge cases that might have caused the original issue
+
+## What NOT to Test
+
+**DO NOT test the following:**
+- **Layout**: CSS positioning, flexbox, grid layouts, spacing
+- **Content**: Text content, labels, messages, static content
+- **Styling**: Colors, fonts, borders, shadows, visual appearance
+- **DOM structure**: Specific HTML elements, class names, IDs (unless they affect functionality)
+
+## Test Cleanup
+
+**When working on existing test files:**
+- **Remove tests** that verify layout, content, or styling
+- **Keep only functional tests** that verify behavior and logic
+- **Focus on user interactions** and business logic validation
+
+## Test Quality Standards
+
+- Maintain minimum 60% coverage (as configured in jest.config.js)
+- Write meaningful tests that verify actual functionality
+- Use descriptive test names that explain what is being tested
+- Mock external dependencies (Firebase, APIs, etc.)
+- Test both happy path and error scenarios
+- Follow the existing test patterns and structure
+
+## Test Commands
+
+- `npm test` - Run all tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:integration` - Run Firebase integration tests
+
+## File Organization
+
+- Keep test files close to the code they test
+- Use the `__tests__` directory structure
+- Follow the existing naming conventions
+- Group related tests in appropriate subdirectories
+
+Remember: Tests are not optional - they are essential for maintaining code quality and preventing regressions in this educational application for children.
+
+@jest.config.js
+@package.json

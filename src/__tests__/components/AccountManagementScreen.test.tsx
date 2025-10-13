@@ -519,80 +519,21 @@ describe('AccountManagementScreen', () => {
       })
     })
 
-    it('should display user information', () => {
+    it('should redirect to parent mode when user is authenticated', () => {
       render(<AccountManagementScreen />)
       
-      expect(screen.getByText('Account Management')).toBeInTheDocument()
-      expect(screen.getByText('test@example.com')).toBeInTheDocument()
-      // Note: displayName is not shown in the current component implementation
+      // Component should return null and dispatch should be called to redirect
+      expect(mockGameContext.dispatch).toHaveBeenCalledWith({
+        type: 'SET_SCREEN',
+        payload: 'parentMode'
+      })
     })
 
-    it('should show sign out button', () => {
-      render(<AccountManagementScreen />)
+    it('should not render any UI when user is authenticated', () => {
+      const { container } = render(<AccountManagementScreen />)
       
-      expect(screen.getByText('Sign Out')).toBeInTheDocument()
-    })
-
-    it('should call signOut when sign out button is clicked', async () => {
-      const user = userEvent.setup()
-      render(<AccountManagementScreen />)
-      
-      const signOutButton = screen.getByText('Sign Out')
-      await user.click(signOutButton)
-      
-      expect(mockAuthContext.signOut).toHaveBeenCalled()
-    })
-
-    it('should show delete account button', () => {
-      render(<AccountManagementScreen />)
-      
-      expect(screen.getByText('Delete Account')).toBeInTheDocument()
-    })
-
-    it('should show confirmation dialog when delete account is clicked', async () => {
-      const user = userEvent.setup()
-      render(<AccountManagementScreen />)
-      
-      const deleteButton = screen.getByText('Delete Account')
-      await user.click(deleteButton)
-      
-      expect(screen.getByText('⚠️ This will permanently delete:')).toBeInTheDocument()
-      expect(screen.getByText('This cannot be undone!')).toBeInTheDocument()
-      expect(screen.getByText('Yes, Delete My Data')).toBeInTheDocument()
-      expect(screen.getByText('Cancel')).toBeInTheDocument()
-    })
-
-    it('should call deleteAccount when confirmed', async () => {
-      const user = userEvent.setup()
-      render(<AccountManagementScreen />)
-      
-      const deleteButton = screen.getByText('Delete Account')
-      await user.click(deleteButton)
-      
-      const confirmButton = screen.getByText('Yes, Delete My Data')
-      await user.click(confirmButton)
-      
-      expect(mockAuthContext.deleteAccount).toHaveBeenCalled()
-    })
-
-    it('should cancel delete when cancel button is clicked', async () => {
-      const user = userEvent.setup()
-      render(<AccountManagementScreen />)
-      
-      const deleteButton = screen.getByText('Delete Account')
-      await user.click(deleteButton)
-      
-      const cancelButton = screen.getByText('Cancel')
-      await user.click(cancelButton)
-      
-      expect(screen.queryByText('Are you sure you want to delete your account?')).not.toBeInTheDocument()
-      expect(mockAuthContext.deleteAccount).not.toHaveBeenCalled()
-    })
-
-    it('should show sync status indicator', () => {
-      render(<AccountManagementScreen />)
-      
-      // Note: SyncStatusIndicator is not currently rendered in the component
+      // Component should return null when user is authenticated
+      expect(container.firstChild).toBeNull()
     })
   })
 

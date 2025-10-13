@@ -54,14 +54,14 @@ describe('RepeatButton', () => {
     render(<RepeatButton />)
     
     const button = screen.getByRole('button')
-    expect(button).toHaveClass('btn-game', 'btn-mode', 'p-4', 'rounded-full')
+    expect(button).toHaveClass('btn-game', 'btn-mode', 'p-2', 'sm:p-3', 'md:p-4', 'rounded-full')
   })
 
   it('should have correct emoji size', () => {
     render(<RepeatButton />)
     
     const emoji = screen.getByText('🗣️')
-    expect(emoji).toHaveClass('text-6xl')
+    expect(emoji).toHaveClass('text-2xl', 'sm:text-3xl', 'md:text-4xl', 'lg:text-6xl')
   })
 
   it('should be accessible', () => {

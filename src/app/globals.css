@@ -9,23 +9,35 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  min-height: 100dvh; /* Use dynamic viewport height for mobile */
+  touch-action: manipulation; /* Allow touch scrolling and prevent double-tap zoom */
+  -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
 }
 
 .container-bg {
   background-color: rgba(30, 41, 59, 0.85);
   backdrop-filter: blur(10px);
   box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+  touch-action: manipulation; /* Allow touch scrolling */
+  overflow-y: auto; /* Ensure scrolling is enabled */
 }
 
 .btn-game {
   transform: scale(1);
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  touch-action: manipulation; /* Optimize touch response */
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
 }
 
 .btn-game:active {
   transform: scale(0.95);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-game:focus {
+  outline: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .btn-level {
@@ -83,11 +95,23 @@ body {
 }
 
 #wordToTypeContainer {
-  min-height: 8rem;
+  min-height: 4rem; /* Smaller on mobile */
+}
+
+@media (min-width: 640px) {
+  #wordToTypeContainer {
+    min-height: 6rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  #wordToTypeContainer {
+    min-height: 8rem;
+  }
 }
 
 .feedback {
-  font-size: 4rem;
+  font-size: 2rem; /* Smaller on mobile */
   position: absolute;
   z-index: 1000;
   top: 50%;
@@ -98,9 +122,41 @@ body {
   white-space: nowrap;
 }
 
+/* Responsive feedback sizing */
+@media (min-width: 640px) {
+  .feedback {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .feedback {
+    font-size: 4rem;
+  }
+}
+
 @keyframes feedback-zoom-out-fade {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
   50% { opacity: 1; transform: translate(-50%, -50%) scale(0.9); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+}
+
+/* Mobile touch optimization */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure proper touch scrolling on mobile */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
+}
+
+/* Prevent text selection on buttons and interactive elements */
+button, .btn-game, [role="button"] {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 

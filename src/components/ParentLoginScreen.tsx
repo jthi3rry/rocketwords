@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useGame } from '@/context/GameContext'
+import BackButton from './BackButton'
 
 export default function ParentLoginScreen() {
   const { state, dispatch } = useGame()
@@ -95,50 +96,43 @@ export default function ParentLoginScreen() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 h-full w-full transition-opacity duration-500">
-      <h2 className="text-3xl md:text-4xl font-extrabold text-purple-400 mb-6">Parent Mode</h2>
-      <p className="text-lg text-gray-400 mb-4">What&apos;s this number?</p>
-      <p className="text-xl font-bold mb-4 text-white">{numberToWords(challengeNumber)}</p>
+    <div className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 h-full w-full transition-opacity duration-500">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-purple-400 mb-4 sm:mb-6 text-center">Parent Mode</h2>
+      <p className="text-base sm:text-lg text-gray-400 mb-3 sm:mb-4 text-center">What&apos;s this number?</p>
+      <p className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-white text-center">{numberToWords(challengeNumber)}</p>
       
       <div className="w-full max-w-xs text-center">
-        <p className="text-4xl font-extrabold text-purple-400 tracking-widest mb-4">
+        <p className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-purple-400 tracking-widest mb-3 sm:mb-4">
           {inputValue.padEnd(3, '_').split('').join(' ')}
         </p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1 sm:gap-2">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(digit => (
             <button
               key={digit}
               onClick={() => handleKeypadTap(digit.toString())}
-              className="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg"
+              className="numeral-btn btn-game btn-mode px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-lg sm:text-xl md:text-2xl rounded-lg"
             >
               {digit}
             </button>
           ))}
           <button 
             onClick={handleClear}
-            className="btn-game px-6 py-4 text-lg rounded-lg bg-red-500 hover:bg-red-600 col-span-1"
+            className="btn-game px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-sm sm:text-base md:text-lg rounded-lg bg-red-500 hover:bg-red-600 col-span-1"
           >
             Clear
           </button>
           <button
             onClick={() => handleKeypadTap('0')}
-            className="numeral-btn btn-game btn-mode px-6 py-4 text-2xl rounded-lg"
+            className="numeral-btn btn-game btn-mode px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-lg sm:text-xl md:text-2xl rounded-lg"
           >
             0
           </button>
         </div>
       </div>
       
-      {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
+      {error && <p className="text-red-400 text-sm mt-3 sm:mt-4 text-center mb-8 sm:mb-12">{error}</p>}
       
-      <div className="flex gap-4 mt-4">
-        <button 
-          onClick={handleBack}
-          className="btn-game px-6 py-3 rounded-full text-lg font-bold text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
+      <BackButton onClick={handleBack} />
     </div>
   )
 }
