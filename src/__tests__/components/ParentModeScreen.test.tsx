@@ -33,8 +33,8 @@ describe('ParentModeScreen', () => {
   it('should render parent mode interface', () => {
     renderWithProviders(<ParentModeScreen />)
     
-    expect(screen.getByText('Manage Words & Levels')).toBeInTheDocument()
-    expect(screen.getByText('Current Words:')).toBeInTheDocument()
+    expect(screen.getByText('Create Learning Adventures! 📚')).toBeInTheDocument()
+    expect(screen.getByText('Manage Levels 📚')).toBeInTheDocument()
   })
 
   it('should display existing levels', () => {
@@ -47,20 +47,26 @@ describe('ParentModeScreen', () => {
   it('should display words for selected level', () => {
     renderWithProviders(<ParentModeScreen />)
     
-    // Should show words from first level by default
-    expect(screen.getByText('cat')).toBeInTheDocument()
-    expect(screen.getByText('dog')).toBeInTheDocument()
+    // Should show words from first level by default (displayed in uppercase)
+    expect(screen.getByText('CAT')).toBeInTheDocument()
+    expect(screen.getByText('DOG')).toBeInTheDocument()
   })
 
   it('should add a new level', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    const newLevelInput = screen.getByPlaceholderText('New Level Name')
-    const addLevelButton = screen.getByText('Add Level')
-    
-    await user.type(newLevelInput, 'Level 3')
+    // Click the "Add" button to show the input (the first button with "Add" text)
+    const addButtons = screen.getAllByRole('button', { name: /add/i })
+    const addLevelButton = addButtons[0] // First button is for adding levels
     await user.click(addLevelButton)
+    
+    // Now the input should be visible
+    const newLevelInput = screen.getByPlaceholderText("e.g., 'Animals 🐱'")
+    await user.type(newLevelInput, 'Level 3')
+    
+    // The level should be created automatically after typing (auto-save)
+    await user.click(document.body) // Blur the input to trigger auto-save
     
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'ADD_LEVEL',
@@ -75,8 +81,14 @@ describe('ParentModeScreen', () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    const addLevelButton = screen.getByText('Add Level')
+    // Click the "Add" button to show the input (the first button with "Add" text)
+    const addButtons = screen.getAllByRole('button', { name: /add/i })
+    const addLevelButton = addButtons[0] // First button is for adding levels
     await user.click(addLevelButton)
+    
+    // Don't type anything, just blur the input
+    const newLevelInput = screen.getByPlaceholderText("e.g., 'Animals 🐱'")
+    await user.click(document.body) // Blur the input
     
     expect(mockDispatch).not.toHaveBeenCalled()
   })
@@ -85,10 +97,14 @@ describe('ParentModeScreen', () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    // Get the level remove button (not the word remove buttons) - it's the first one
-    const removeButtons = screen.getAllByRole('button', { name: /remove/i })
-    const removeLevelButton = removeButtons[0]
-    await user.click(removeLevelButton)
+    // Get the level delete button (✕ button next to Level 1)
+    const deleteButtons = screen.getAllByText('✕')
+    const levelDeleteButton = deleteButtons[0] // First delete button is for level
+    await user.click(levelDeleteButton)
+    
+    // Should show confirmation dialog, then click the actual delete button
+    const confirmDeleteButton = screen.getByText('Delete ✕')
+    await user.click(confirmDeleteButton)
     
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'REMOVE_LEVEL',
@@ -109,23 +125,22 @@ describe('ParentModeScreen', () => {
 
     renderWithProviders(<ParentModeScreen />)
     
-    // Get the level remove button (not the word remove buttons) - it's the first one
-    const removeButtons = screen.getAllByRole('button', { name: /remove/i })
-    const removeLevelButton = removeButtons[0]
-    expect(removeLevelButton).toBeDisabled()
+    // When there's only one level, the delete button should not be visible
+    const deleteButtons = screen.getAllByText('✕')
+    // Only word delete buttons should be present, not level delete buttons
+    expect(deleteButtons).toHaveLength(1) // Only the word delete button
   })
 
   it('should update level name', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    // Get the level name input (not the select)
-    const levelNameInput = screen.getByPlaceholderText('Edit Level Name')
-    const saveNameButton = screen.getByText('Save Name')
+    // Get the level name input (it should have the current level name as value)
+    const levelNameInput = screen.getByPlaceholderText('Level name')
     
     await user.clear(levelNameInput)
     await user.type(levelNameInput, 'Updated Level 1')
-    await user.click(saveNameButton)
+    await user.click(document.body) // Blur to trigger auto-save
     
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_LEVEL_NAME',
@@ -140,8 +155,8 @@ describe('ParentModeScreen', () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    const newWordInput = screen.getByPlaceholderText('Add new word')
-    const addWordButton = screen.getByText('Add Word')
+    const newWordInput = screen.getByPlaceholderText('Words (space or comma separated)... ✍️')
+    const addWordButton = screen.getByText('Add Words ➕')
     
     await user.type(newWordInput, 'bird')
     await user.click(addWordButton)
@@ -159,8 +174,8 @@ describe('ParentModeScreen', () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    const newWordInput = screen.getByPlaceholderText('Add new word')
-    const addWordButton = screen.getByText('Add Word')
+    const newWordInput = screen.getByPlaceholderText('Words (space or comma separated)... ✍️')
+    const addWordButton = screen.getByText('Add Words ➕')
     
     await user.type(newWordInput, 'cat') // Already exists
     await user.click(addWordButton)
@@ -172,7 +187,7 @@ describe('ParentModeScreen', () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    const addWordButton = screen.getByText('Add Word')
+    const addWordButton = screen.getByText('Add Words ➕')
     await user.click(addWordButton)
     
     expect(mockDispatch).not.toHaveBeenCalled()
@@ -182,10 +197,14 @@ describe('ParentModeScreen', () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    // Get the word remove buttons (not the level remove button)
-    const removeButtons = screen.getAllByRole('button', { name: /remove/i })
-    // The first remove button is the level remove button, so we want the second one (word remove)
-    await user.click(removeButtons[1]) // Remove first word
+    // Get the word delete button by title attribute (first one for the first word)
+    const wordDeleteButtons = screen.getAllByTitle('Remove word')
+    const wordDeleteButton = wordDeleteButtons[0] // First word delete button
+    await user.click(wordDeleteButton)
+    
+    // Should show confirmation dialog, then click the actual delete button
+    const confirmDeleteButton = screen.getByText('Delete ✕')
+    await user.click(confirmDeleteButton)
     
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'REMOVE_WORD',
@@ -200,21 +219,21 @@ describe('ParentModeScreen', () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    // Get the select element specifically
-    const levelSelect = screen.getByRole('combobox')
-    await user.selectOptions(levelSelect, 'level2')
+    // Click on Level 2 button to switch to it
+    const level2Button = screen.getByText('Level 2')
+    await user.click(level2Button)
     
-    // Should show words from level 2
-    expect(screen.getByText('bird')).toBeInTheDocument()
-    expect(screen.getByText('fish')).toBeInTheDocument()
+    // Should show words from level 2 (displayed in uppercase)
+    expect(screen.getByText('BIRD')).toBeInTheDocument()
+    expect(screen.getByText('FISH')).toBeInTheDocument()
   })
 
   it('should convert words to lowercase when adding', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    const newWordInput = screen.getByPlaceholderText('Add new word')
-    const addWordButton = screen.getByText('Add Word')
+    const newWordInput = screen.getByPlaceholderText('Words (space or comma separated)... ✍️')
+    const addWordButton = screen.getByText('Add Words ➕')
     
     await user.type(newWordInput, 'BIRD')
     await user.click(addWordButton)
@@ -232,8 +251,8 @@ describe('ParentModeScreen', () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    const newWordInput = screen.getByPlaceholderText('Add new word')
-    const addWordButton = screen.getByText('Add Word')
+    const newWordInput = screen.getByPlaceholderText('Words (space or comma separated)... ✍️')
+    const addWordButton = screen.getByText('Add Words ➕')
     
     await user.type(newWordInput, 'bird')
     await user.click(addWordButton)
@@ -241,17 +260,29 @@ describe('ParentModeScreen', () => {
     expect(newWordInput).toHaveValue('')
   })
 
-  it('should clear input after adding level', async () => {
+  it('should display added level name in input after adding level', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ParentModeScreen />)
     
-    const newLevelInput = screen.getByPlaceholderText('New Level Name')
-    const addLevelButton = screen.getByText('Add Level')
-    
-    await user.type(newLevelInput, 'Level 3')
+    // Click the "Add" button to show the input (the first button with "Add" text)
+    const addButtons = screen.getAllByRole('button', { name: /add/i })
+    const addLevelButton = addButtons[0] // First button is for adding levels
     await user.click(addLevelButton)
     
-    expect(newLevelInput).toHaveValue('')
+    // Now the input should be visible
+    const newLevelInput = screen.getByPlaceholderText("e.g., 'Animals 🐱'")
+    await user.type(newLevelInput, 'Level 3')
+    
+    // The level should be created automatically after typing (auto-save)
+    await user.click(document.body) // Blur the input to trigger auto-save
+    
+    // Wait for the new level to be created and the input to show the level name
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Level 3')).toBeInTheDocument()
+    })
+    
+    // The input should now show the level name instead of being cleared
+    expect(screen.getByDisplayValue('Level 3')).toBeInTheDocument()
   })
 
   it('should handle level selection when levels change', () => {

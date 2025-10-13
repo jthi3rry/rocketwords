@@ -311,7 +311,7 @@ export default function ParentModeScreen() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 h-full w-full transition-opacity duration-500 overflow-y-auto">
+    <div className="flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 h-full w-full transition-opacity duration-500 overflow-y-auto" style={{ touchAction: 'manipulation' }}>
       <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-2 sm:mb-3 text-center">Create Learning Adventures! 📚</h2>
       <p className="text-sm sm:text-base text-gray-300 mb-4 sm:mb-6 text-center max-w-md">
         Add words and create levels to help your child learn and grow! 🌟
@@ -330,9 +330,6 @@ export default function ParentModeScreen() {
       
         {/* Level Management */}
         <div className="p-3 bg-gray-800 rounded-lg border-2 border-gray-600">
-          <h4 className="text-sm font-semibold text-gray-300 mb-2">
-            {showAddLevelInput ? 'Create New Level' : ''}
-          </h4>
           
           {/* Level Selector Pills */}
           <div className="flex flex-wrap gap-2 mb-3">

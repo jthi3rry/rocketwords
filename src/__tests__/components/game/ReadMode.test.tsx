@@ -114,16 +114,16 @@ describe('ReadMode', () => {
     )
 
     const repeatButton = screen.getByText('🗣️')
-    expect(repeatButton).toHaveClass('text-6xl')
+    expect(repeatButton).toHaveClass('text-2xl', 'sm:text-3xl', 'md:text-4xl', 'lg:text-6xl')
 
     const caseToggleButton = screen.getByText('Aa')
-    expect(caseToggleButton).toHaveClass('btn-game', 'btn-mode', 'p-3', 'rounded-full', 'text-2xl', 'font-bold')
+    expect(caseToggleButton).toHaveClass('btn-game', 'btn-mode', 'p-2', 'sm:p-3', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'transition-all', 'duration-200', 'transform', 'hover:scale-105', 'active:scale-95', 'bg-blue-500', 'hover:bg-blue-600', 'text-white')
 
     const iSaidItButton = screen.getByText('I said it! 🎉')
-    expect(iSaidItButton).toHaveClass('btn-game', 'btn-answer', 'px-8', 'py-4', 'rounded-full', 'text-2xl', 'font-bold', 'text-white', 'bg-green-500', 'hover:bg-green-600')
+    expect(iSaidItButton).toHaveClass('btn-game', 'btn-answer', 'px-6', 'sm:px-8', 'py-3', 'sm:py-4', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'text-white', 'bg-green-500', 'hover:bg-green-600', 'transition-colors')
 
     const nextWordButton = screen.getByText('Next Word ➡️')
-    expect(nextWordButton).toHaveClass('btn-game', 'btn-mode', 'px-8', 'py-4', 'rounded-full', 'text-2xl', 'font-bold', 'text-white', 'bg-purple-500', 'hover:bg-purple-600')
+    expect(nextWordButton).toHaveClass('btn-game', 'btn-mode', 'px-6', 'sm:px-8', 'py-3', 'sm:py-4', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'text-white', 'bg-purple-500', 'hover:bg-purple-600', 'transition-colors')
   })
 
   it('should render with proper layout structure', () => {
@@ -143,8 +143,8 @@ describe('ReadMode', () => {
 
     const wordDisplay = screen.getByText('CAT')
     const wordContainer = wordDisplay.closest('div')
-    expect(wordContainer).toHaveClass('p-8', 'bg-gray-800', 'rounded-3xl', 'w-full', 'max-w-2xl', 'text-center', 'mb-8', 'shadow-md')
-    expect(wordDisplay).toHaveClass('text-5xl', 'md:text-7xl', 'font-extrabold', 'text-blue-400')
+    expect(wordContainer).toHaveClass('p-4', 'sm:p-6', 'md:p-8', 'bg-gray-800', 'rounded-3xl', 'w-full', 'max-w-2xl', 'text-center', 'mb-4', 'sm:mb-6', 'md:mb-8', 'shadow-md')
+    expect(wordDisplay).toHaveClass('text-3xl', 'sm:text-4xl', 'md:text-5xl', 'lg:text-7xl', 'font-extrabold', 'text-blue-400')
   })
 
   it('should render button container with responsive layout', () => {
@@ -154,7 +154,7 @@ describe('ReadMode', () => {
 
     const iSaidItButton = screen.getByText('I said it! 🎉')
     const buttonContainer = iSaidItButton.closest('div')
-    expect(buttonContainer).toHaveClass('flex', 'flex-col', 'md:flex-row', 'gap-4')
+    expect(buttonContainer).toHaveClass('flex', 'flex-col', 'md:flex-row', 'gap-2', 'sm:gap-3', 'md:gap-4')
   })
 
   it('should maintain proper component structure', () => {
@@ -192,7 +192,7 @@ describe('ReadMode', () => {
 
     const repeatButton = screen.getByText('🗣️')
     const controlContainer = repeatButton.closest('div')
-    expect(controlContainer).toHaveClass('flex', 'items-center', 'gap-4', 'mb-8')
+    expect(controlContainer).toHaveClass('flex', 'items-center', 'gap-2', 'sm:gap-3', 'md:gap-4', 'mb-4', 'sm:mb-6', 'md:mb-8')
   })
 
   it('should handle case toggle updates', () => {
@@ -219,7 +219,7 @@ describe('ReadMode', () => {
     )
 
     const wordDisplay = screen.getByText('CAT')
-    expect(wordDisplay).toHaveClass('text-5xl', 'md:text-7xl')
+    expect(wordDisplay).toHaveClass('text-3xl', 'sm:text-4xl', 'md:text-5xl', 'lg:text-7xl')
 
     const iSaidItButton = screen.getByText('I said it! 🎉')
     const buttonContainer = iSaidItButton.closest('div')
