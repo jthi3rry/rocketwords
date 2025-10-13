@@ -35,12 +35,15 @@ export default function WelcomeScreen() {
           </button>
         </div>
       </div>
-      {/* Parent Mode Cog Icon */}
+      {/* Parent Mode Button */}
       <button 
         onClick={handleParentMode}
-        className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 p-2 sm:p-3 md:p-4 rounded-full text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors text-xl sm:text-2xl md:text-3xl"
+        className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 px-3 py-2 sm:px-4 sm:py-3 rounded-full text-gray-400 bg-gray-700 hover:bg-gray-600 transition-colors flex items-center gap-2"
+        title="Parent Settings"
+        aria-label="Open parent settings"
       >
-        ⚙️
+        <span className="text-sm sm:text-base font-medium">Parent</span>
+        <span className="text-lg sm:text-xl md:text-2xl">⚙️</span>
       </button>
     </div>
   )

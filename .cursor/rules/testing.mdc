@@ -8,11 +8,14 @@ alwaysApply: true
 
 **CRITICAL: Always consider testing when making changes**
 
+## What TO Test (Functionality Only)
+
 When implementing new features, fixing bugs, or making any code changes:
 
 1. **New Components**: Create corresponding test files in `src/__tests__/components/`
    - Follow the existing pattern: `ComponentName.test.tsx`
-   - Test user interactions, props, and rendering behavior
+   - Test user interactions, event handlers, and business logic
+   - Test component behavior and state changes
    - Use React Testing Library best practices
 
 2. **New Hooks**: Create test files in `src/__tests__/hooks/`
@@ -34,6 +37,21 @@ When implementing new features, fixing bugs, or making any code changes:
 6. **Bug Fixes**: Update existing tests or add new ones to prevent regression
    - Ensure the bug is properly covered by tests
    - Add edge cases that might have caused the original issue
+
+## What NOT to Test
+
+**DO NOT test the following:**
+- **Layout**: CSS positioning, flexbox, grid layouts, spacing
+- **Content**: Text content, labels, messages, static content
+- **Styling**: Colors, fonts, borders, shadows, visual appearance
+- **DOM structure**: Specific HTML elements, class names, IDs (unless they affect functionality)
+
+## Test Cleanup
+
+**When working on existing test files:**
+- **Remove tests** that verify layout, content, or styling
+- **Keep only functional tests** that verify behavior and logic
+- **Focus on user interactions** and business logic validation
 
 ## Test Quality Standards
 

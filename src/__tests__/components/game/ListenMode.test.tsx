@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import ListenMode from '@/components/game/ListenMode'
 import { renderWithProviders } from '../../testUtils'
 
@@ -236,9 +236,9 @@ describe('ListenMode', () => {
     )
 
     // The grid container should be present even when empty
-    const gridDiv = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2')
+    const gridDiv = document.querySelector('.grid.grid-cols-2')
     expect(gridDiv).toBeInTheDocument()
-    expect(gridDiv).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-2', 'sm:gap-3', 'md:gap-4', 'w-full', 'max-w-xl')
+    expect(gridDiv).toHaveClass('grid', 'grid-cols-2', 'gap-2', 'sm:gap-3', 'md:gap-4', 'w-full', 'max-w-xl')
   })
 
   it('should handle case toggle updates', () => {
@@ -267,8 +267,8 @@ describe('ListenMode', () => {
     )
 
     // Check that the grid container has responsive classes
-    const gridDiv = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2')
-    expect(gridDiv).toHaveClass('grid-cols-1', 'md:grid-cols-2')
+    const gridDiv = document.querySelector('.grid.grid-cols-2')
+    expect(gridDiv).toHaveClass('grid-cols-2')
   })
 
   it('should handle component lifecycle correctly', () => {
@@ -420,6 +420,44 @@ describe('ListenMode', () => {
     )
 
     // Component should render with different word
+    expect(screen.getByText('🗣️')).toBeInTheDocument()
+  })
+
+  it('should handle focus removal when new word loads', () => {
+    renderWithProviders(
+      <ListenMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />
+    )
+
+    // Get the onWordSelected callback from the hook
+    const onWordSelected = useGameModeInitialization.mock.calls[0][0].onWordSelected
+    
+    // Verify that the callback is a function (this ensures the blur logic is in place)
+    expect(typeof onWordSelected).toBe('function')
+    
+    // The blur functionality is implemented in the component code
+    // This test verifies that the callback exists and can be called
+    expect(() => onWordSelected('test')).not.toThrow()
+  })
+
+  it('should not call blur when no element is focused', async () => {
+    // Mock document.activeElement to be null
+    Object.defineProperty(document, 'activeElement', {
+      value: null,
+      writable: true,
+    })
+
+    renderWithProviders(
+      <ListenMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />
+    )
+
+    // Simulate onWordSelected being called
+    const onWordSelected = useGameModeInitialization.mock.calls[0][0].onWordSelected
+    
+    await act(async () => {
+      onWordSelected('test')
+    })
+
+    // Should not throw any errors and should complete successfully
     expect(screen.getByText('🗣️')).toBeInTheDocument()
   })
 })

@@ -85,12 +85,12 @@ export default function ListenMode({ onFeedback, onPlayWord }: ListenModeProps) 
         <RepeatButton />
         <CaseToggleButton />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 w-full max-w-xl">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 w-full max-w-xl">
         {options.map((word, index) => {
           const isDisabled = buttonsDisabled || disabledButtons.has(word)
           return (
             <button
-              key={index}
+              key={`${word}-${index}`}
               onClick={() => handleTapAnswer(word)}
               disabled={isDisabled}
               className={`btn-game btn-answer p-3 sm:p-4 md:p-6 rounded-xl text-lg sm:text-xl md:text-2xl font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 w-full md:w-auto ${

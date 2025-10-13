@@ -120,10 +120,10 @@ describe('ReadMode', () => {
     expect(caseToggleButton).toHaveClass('btn-game', 'btn-mode', 'p-2', 'sm:p-3', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'transition-all', 'duration-200', 'transform', 'hover:scale-105', 'active:scale-95', 'bg-blue-500', 'hover:bg-blue-600', 'text-white')
 
     const iSaidItButton = screen.getByText('I said it! 🎉')
-    expect(iSaidItButton).toHaveClass('btn-game', 'btn-answer', 'px-6', 'sm:px-8', 'py-3', 'sm:py-4', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'text-white', 'bg-green-500', 'hover:bg-green-600', 'transition-colors')
+    expect(iSaidItButton).toHaveClass('btn-game', 'btn-answer', 'px-6', 'sm:px-8', 'py-3', 'sm:py-4', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'transition-all', 'duration-200', 'transform', 'hover:scale-105', 'active:scale-95')
 
     const nextWordButton = screen.getByText('Next Word ➡️')
-    expect(nextWordButton).toHaveClass('btn-game', 'btn-mode', 'px-6', 'sm:px-8', 'py-3', 'sm:py-4', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'text-white', 'bg-purple-500', 'hover:bg-purple-600', 'transition-colors')
+    expect(nextWordButton).toHaveClass('btn-game', 'btn-mode', 'px-6', 'sm:px-8', 'py-3', 'sm:py-4', 'rounded-full', 'text-lg', 'sm:text-xl', 'md:text-2xl', 'font-bold', 'transition-all', 'duration-200', 'transform', 'hover:scale-105', 'active:scale-95')
   })
 
   it('should render with proper layout structure', () => {
@@ -154,7 +154,7 @@ describe('ReadMode', () => {
 
     const iSaidItButton = screen.getByText('I said it! 🎉')
     const buttonContainer = iSaidItButton.closest('div')
-    expect(buttonContainer).toHaveClass('flex', 'flex-col', 'md:flex-row', 'gap-2', 'sm:gap-3', 'md:gap-4')
+    expect(buttonContainer).toHaveClass('flex', 'flex-row', 'gap-2', 'sm:gap-3', 'md:gap-4')
   })
 
   it('should maintain proper component structure', () => {
@@ -223,7 +223,7 @@ describe('ReadMode', () => {
 
     const iSaidItButton = screen.getByText('I said it! 🎉')
     const buttonContainer = iSaidItButton.closest('div')
-    expect(buttonContainer).toHaveClass('flex', 'flex-col', 'md:flex-row')
+    expect(buttonContainer).toHaveClass('flex', 'flex-row')
   })
 
   it('should handle timer-based next word after I said it', async () => {
@@ -277,5 +277,62 @@ describe('ReadMode', () => {
 
     expect(mockOnFeedback).toHaveBeenCalledWith(true)
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'INCREMENT_SCORE' })
+  })
+
+  it('should disable I said it button after click', () => {
+    renderWithProviders(
+      <ReadMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />
+    )
+
+    const iSaidItButton = screen.getByText('I said it! 🎉')
+    
+    // Button should be enabled initially
+    expect(iSaidItButton).not.toBeDisabled()
+    expect(iSaidItButton).not.toHaveClass('opacity-50', 'cursor-not-allowed')
+
+    // Click the button
+    fireEvent.click(iSaidItButton)
+
+    // Button should be disabled after click
+    expect(iSaidItButton).toBeDisabled()
+    expect(iSaidItButton).toHaveClass('opacity-50', 'cursor-not-allowed')
+  })
+
+  it('should have button disabled state properly managed', () => {
+    renderWithProviders(
+      <ReadMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />
+    )
+
+    const iSaidItButton = screen.getByText('I said it! 🎉')
+    
+    // Button should be enabled initially
+    expect(iSaidItButton).not.toBeDisabled()
+    expect(iSaidItButton).not.toHaveClass('opacity-50', 'cursor-not-allowed')
+
+    // Click the button to disable it
+    fireEvent.click(iSaidItButton)
+    
+    // Button should be disabled after click
+    expect(iSaidItButton).toBeDisabled()
+    expect(iSaidItButton).toHaveClass('opacity-50', 'cursor-not-allowed')
+  })
+
+  it('should not disable Next Word button when I said it is clicked', () => {
+    renderWithProviders(
+      <ReadMode onFeedback={mockOnFeedback} onPlayWord={mockOnPlayWord} />
+    )
+
+    const iSaidItButton = screen.getByText('I said it! 🎉')
+    const nextWordButton = screen.getByText('Next Word ➡️')
+    
+    // Click I said it button
+    fireEvent.click(iSaidItButton)
+
+    // I said it button should be disabled
+    expect(iSaidItButton).toBeDisabled()
+    
+    // Next Word button should remain enabled
+    expect(nextWordButton).not.toBeDisabled()
+    expect(nextWordButton).not.toHaveClass('opacity-50', 'cursor-not-allowed')
   })
 })
