@@ -160,3 +160,24 @@ button, .btn-game, [role="button"] {
   user-select: none;
 }
 
+/* Prevent text selection on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  body {
+    -webkit-touch-callout: none; /* iOS Safari - prevents callout menu on long press */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Re-enable text selection for input fields and textareas */
+  input,
+  textarea,
+  [contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+}
+
